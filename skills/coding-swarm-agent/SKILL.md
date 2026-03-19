@@ -80,6 +80,18 @@ When a new module or standalone feature is requested (e.g., backtest, new micros
 
 ## Workflow
 
+### Starting a New Batch
+
+When beginning a new swarm project or a new phase of work, archive the current batch first:
+
+```bash
+SKILL_DIR=~/.openclaw/workspace/skills/coding-swarm-agent
+$SKILL_DIR/scripts/swarm-new-batch.sh --project "<project-name>" --repo "<github-url>"
+```
+
+This archives the current `active-tasks.json` to `swarm/history/` and creates a fresh one.
+Then register new tasks and dispatch as usual.
+
 ### Phase 1: Plan
 
 Send requirement to cc-plan. Read `references/prompt-cc-plan.md` for the template.
