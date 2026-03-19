@@ -228,6 +228,17 @@ Think of it like a human reviewing their journal and updating their mental model
 
 The goal: Be helpful without being annoying. Check in a few times a day, do useful background work, but respect quiet time.
 
+## ⚠️ 代码修改铁律
+
+**除非爸爸明确说"你来改"，否则我永远不碰代码。**
+
+- 任何项目目录下的文件（.ts .tsx .js .py .sh .json 等）→ 全部交给 swarm agent
+- 哪怕只有一行 fix，也走 dispatch.sh 流程
+- "我来分析一下"≠"我来改"，分析之后要 dispatch，不是自己动手
+- 唯一例外：workspace 自己的配置文件（AGENTS.md、MEMORY.md、skills/、swarm/ 等）
+
+违反此规则 = 绕过了质量管控 + 破坏了 swarm 追踪体系。
+
 ## 🐝 Agent Swarm — Multi-Agent Coding
 
 When human requests a feature/fix for a project, use the `coding-swarm-agent` skill to orchestrate coding agents.

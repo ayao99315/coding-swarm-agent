@@ -1,0 +1,27 @@
+{
+  "agent": "main",
+  "updated_at": "2026-03-19T08:33:00Z",
+  "date": "2026-03-19",
+  "summary": "完成 SWARM-T002：去掉 on-complete webhook hop，改为同步解锁依赖后直接通知主 session；并保留 SWARM-T001 的汇总通知修复结果",
+  "tasks_done": [
+    "SWARM-T001: 在 on-complete.sh 新增 swarm-complete 汇总通知，统计任务数、唯一 commit 数与累计 token",
+    "SWARM-T001: 增加 /tmp/agent-swarm-complete/*.sent 去重，避免最后几个任务并发结束时重复通知",
+    "SWARM-T001: 验证 parse-tokens.sh 能解析真实 Codex/Claude 日志",
+    "SWARM-T002: on-complete.sh 移除 /hooks/agent webhook 链路，改为同步更新状态后直接 openclaw system event 唤醒主 session",
+    "SWARM-T002: 验证 update-task-status.sh 会在 done 时把依赖满足的 blocked 任务翻为 pending",
+    "SWARM-T002: 用临时 HOME + fake openclaw 跑隔离测试，确认 done -> pending 解锁、agent idle、main-session notify 全部成立"
+  ],
+  "tasks_pending": [
+    "SWARM-T003: 修复 dispatch.sh --prompt-file 输入链路",
+    "SWARM-T004: 跑 2 任务 mini swarm 做端到端验证"
+  ],
+  "current_project": "coding-swarm-agent",
+  "tokens": {
+    "codex_input": 0,
+    "codex_output": 0,
+    "cc_input": 0,
+    "cc_output": 0
+  },
+  "blockers": null,
+  "notes": "SWARM-T002 尚未单独 git commit；当前 workspace 还有用户已有的脏改动，未回退。"
+}

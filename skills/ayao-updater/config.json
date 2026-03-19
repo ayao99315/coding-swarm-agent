@@ -1,0 +1,9 @@
+{
+  "schedule": "0 3 * * *",
+  "skipSkills": [],
+  "skipPreRelease": true,
+  "restartGateway": true,
+  "notify": true,
+  "notifyTarget": "8449051145",
+  "dryRun": false
+}

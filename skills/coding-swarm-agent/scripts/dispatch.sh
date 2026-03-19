@@ -136,7 +136,11 @@ run_agent() {
       cat "\${PROMPT_TMP_FILE}" | "\${COMMAND[@]}"
       ;;
     append)
-      "\${COMMAND[@]}" "\$(cat "\${PROMPT_TMP_FILE}")"
+      # Preserve trailing newlines when passing prompt text as a single argv item.
+      _PROMPT_SENTINEL=$'\001'
+      PROMPT_CONTENT="\$(cat "\${PROMPT_TMP_FILE}"; printf '%s' "\${_PROMPT_SENTINEL}")"
+      PROMPT_CONTENT="\${PROMPT_CONTENT%\${_PROMPT_SENTINEL}}"
+      "\${COMMAND[@]}" "\${PROMPT_CONTENT}"
       ;;
     *)
       "\${COMMAND[@]}"
@@ -202,7 +206,11 @@ run_agent() {
       cat "\${PROMPT_TMP_FILE}" | "\${COMMAND[@]}"
       ;;
     append)
-      "\${COMMAND[@]}" "\$(cat "\${PROMPT_TMP_FILE}")"
+      # Preserve trailing newlines when passing prompt text as a single argv item.
+      _PROMPT_SENTINEL=$'\001'
+      PROMPT_CONTENT="\$(cat "\${PROMPT_TMP_FILE}"; printf '%s' "\${_PROMPT_SENTINEL}")"
+      PROMPT_CONTENT="\${PROMPT_CONTENT%\${_PROMPT_SENTINEL}}"
+      "\${COMMAND[@]}" "\${PROMPT_CONTENT}"
       ;;
     *)
       "\${COMMAND[@]}"

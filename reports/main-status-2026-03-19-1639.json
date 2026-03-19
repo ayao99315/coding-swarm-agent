@@ -1,0 +1,27 @@
+{
+  "agent": "main",
+  "updated_at": "2026-03-19T08:39:00Z",
+  "date": "2026-03-19",
+  "summary": "完成 SWARM-T002：去掉 on-complete webhook hop，改为 direct system event，并在 update-task-status 内同步自动解锁 blocked 任务后提交收口。",
+  "tasks_done": [
+    "SWARM-T002: update-task-status.sh 在任务 done 时同步扫描 active-tasks.json，把依赖已满足的 blocked 任务翻为 pending",
+    "SWARM-T002: on-complete.sh 移除 /hooks/agent webhook，改为 openclaw system event 直接通知主 session",
+    "SWARM-T002: on-complete.sh 通知文案简化为 Done: TASK_ID TASK_NAME，并从 active-tasks.json 解析任务名",
+    "SWARM-T002: bash -n 验证 on-complete.sh 和 update-task-status.sh 语法通过",
+    "SWARM-T002: 提交 e2abe56，并将 swarm/active-tasks.json 中 SWARM-T002 标记为 done"
+  ],
+  "tasks_pending": [
+    "SWARM-T003: 修复 dispatch.sh --prompt-file 输入链路",
+    "SWARM-T004: 跑 2 任务 mini swarm 做端到端验证",
+    "SWARM-REVIEW2: Review SWARM-T002+T003 修改，确认链路简化和 prompt-file 修复"
+  ],
+  "current_project": "coding-swarm-agent",
+  "tokens": {
+    "codex_input": 0,
+    "codex_output": 0,
+    "cc_input": 0,
+    "cc_output": 0
+  },
+  "blockers": null,
+  "notes": "工作区仍有本次任务之外的脏改动，未回退。"
+}

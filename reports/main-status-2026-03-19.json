@@ -1,0 +1,23 @@
+{
+  "agent": "main",
+  "updated_at": "2026-03-19T08:01:29Z",
+  "date": "2026-03-19",
+  "summary": "完成 SWARM-T001：补上 swarm 全部完成汇总通知，并确认 Codex/Claude token 已正常写入 active-tasks.json",
+  "tasks_done": [
+    "SWARM-T001: 在 on-complete.sh 新增 swarm-complete 汇总通知，统计任务数、唯一 commit 数与累计 token",
+    "SWARM-T001: 增加 /tmp/agent-swarm-complete/*.sent 去重，避免最后几个任务并发结束时重复通知",
+    "SWARM-T001: 验证 parse-tokens.sh 能解析真实 Codex/Claude 日志",
+    "SWARM-T001: 复核 update-task-status.sh 落盘链路，确认 tokens 已写入 swarm/active-tasks.json",
+    "SWARM-T001: 提交并推送 61fba08 到 coding-swarm-agent main"
+  ],
+  "tasks_pending": [],
+  "current_project": "coding-swarm-agent",
+  "tokens": {
+    "codex_input": 0,
+    "codex_output": 0,
+    "cc_input": 0,
+    "cc_output": 0
+  },
+  "blockers": null,
+  "notes": "本次只提交了 skills/coding-swarm-agent/scripts/on-complete.sh；工作区其余脏改动未纳入 commit。"
+}
