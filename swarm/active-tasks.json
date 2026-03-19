@@ -1,7 +1,7 @@
 {
   "project": "PolyGo-Backtest",
   "repo": "github.com/ayao99315/PolyGo",
-  "updated_at": "2026-03-19T17:27:12.423372+00:00",
+  "updated_at": "2026-03-19T20:13:13.229214+00:00",
   "ui_quality": "internal",
   "milestones": [
     {
@@ -612,19 +612,21 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
       "note": "处理 SWARM-REVIEW2 提出的 dispatch.sh 三个遗留问题，并同步修正文档示例。",
-      "commits": [],
+      "commits": [
+        "63a4f9e"
+      ],
       "issue": null,
       "depends_on": [],
       "created_at": "2026-03-19T17:27:08Z",
-      "updated_at": "2026-03-19T17:27:12.423372+00:00",
+      "updated_at": "2026-03-19T17:34:34.376263+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
+        "input": 105534,
         "output": 0,
         "cache_read": 0,
         "cache_write": 0
@@ -636,17 +638,19 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "blocked",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
-      "note": "处理 SWARM-REVIEW2 提出的历史任务被错误纳入汇总的问题；需要给当前批次增加可判定边界。",
-      "commits": [],
+      "note": "on-complete.sh: swarm-complete 汇总范围改为 batch_started_at 过滤，fallback 向后兼容。",
+      "commits": [
+        "f3d6cd0"
+      ],
       "issue": null,
       "depends_on": [
         "SWARM-T005"
       ],
       "created_at": "2026-03-19T17:27:08Z",
-      "updated_at": "2026-03-19T17:27:08Z",
+      "updated_at": "2026-03-19T17:38:39.599Z",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -662,7 +666,7 @@
       "domain": "backend",
       "agent": "cc-review",
       "tmux": "cc-review",
-      "status": "blocked",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
       "note": "重点检查 dispatch.sh 调用兼容性、prompt-file 传递、macOS mktemp，以及 on-complete 仅统计当前批次任务。",
@@ -672,7 +676,7 @@
         "SWARM-T006"
       ],
       "created_at": "2026-03-19T17:27:08Z",
-      "updated_at": "2026-03-19T17:27:08Z",
+      "updated_at": "2026-03-19T20:13:13.229214+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
