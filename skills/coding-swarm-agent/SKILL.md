@@ -254,7 +254,7 @@ Check `~/.openclaw/workspace/swarm/config.json` → `"verbose_dispatch": true/fa
 
 即使不经过 dispatch.sh，凡是 spawn coding agent 的操作，也必须汇报同格式的 Dispatch Card。字段：
 - Session: exec sessionId（如 `calm-falcon`）
-- 模型: 对应 Claude Code 为 `claude-sonnet-4-5` 或 opus；Codex 为 `gpt-5.4`
+- 模型: 对应 Claude Code 为 `claude-sonnet-4-6` 或 opus；Codex 为 `gpt-5.4`
 
 ### 切换开关
 
@@ -289,9 +289,9 @@ tmux new-session -d -s codex-review -c /path/to/project
 
 | Agent | Model | Rationale |
 |---|---|---|
-| `cc-plan` | `claude-opus-4-5` | Planning/architecture — always best model |
-| `cc-review` | `claude-sonnet-4-5` | Execution task, sonnet sufficient, saves quota |
-| `cc-frontend` | `claude-sonnet-4-5` | UI implementation, sonnet sufficient |
+| `cc-plan` | `claude-opus-4-6` | Planning/architecture — always best model |
+| `cc-review` | `claude-sonnet-4-6` | Execution task, sonnet sufficient, saves quota |
+| `cc-frontend` | `claude-sonnet-4-6` | UI implementation, sonnet sufficient |
 
 #### Codex（`codex` CLI）
 
@@ -315,11 +315,11 @@ SKILL_DIR=~/.openclaw/workspace/skills/coding-swarm-agent
 # cc-plan — always opus
 # Use --output-format json so parse-tokens.sh can extract usage stats from the log.
 # dispatch.sh wraps the command with `tee LOG_FILE`, so LOG_FILE contains the JSON blob.
-$SKILL_DIR/scripts/dispatch.sh cc-plan T000 "claude --model claude-opus-4-5 --permission-mode bypassPermissions --no-session-persistence --print --output-format json 'PROMPT_HERE'"
+$SKILL_DIR/scripts/dispatch.sh cc-plan T000 "claude --model claude-opus-4-6 --permission-mode bypassPermissions --no-session-persistence --print --output-format json 'PROMPT_HERE'"
 
 # cc-review / cc-frontend — sonnet
-$SKILL_DIR/scripts/dispatch.sh cc-review T005 "claude --model claude-sonnet-4-5 --permission-mode bypassPermissions --no-session-persistence --print --output-format json 'PROMPT_HERE'"
-$SKILL_DIR/scripts/dispatch.sh cc-frontend T010 "claude --model claude-sonnet-4-5 --permission-mode bypassPermissions --no-session-persistence --print --output-format json 'PROMPT_HERE'"
+$SKILL_DIR/scripts/dispatch.sh cc-review T005 "claude --model claude-sonnet-4-6 --permission-mode bypassPermissions --no-session-persistence --print --output-format json 'PROMPT_HERE'"
+$SKILL_DIR/scripts/dispatch.sh cc-frontend T010 "claude --model claude-sonnet-4-6 --permission-mode bypassPermissions --no-session-persistence --print --output-format json 'PROMPT_HERE'"
 
 # Codex — standard task (high effort, default)
 $SKILL_DIR/scripts/dispatch.sh codex-1 T001 "codex exec -c model_reasoning_effort=high --dangerously-bypass-approvals-and-sandbox 'PROMPT_HERE'"
