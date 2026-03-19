@@ -103,6 +103,20 @@ This installs a `post-commit` hook that:
 - Writes a signal to `/tmp/agent-swarm-signals.jsonl`
 - Wakes the orchestrator via `openclaw system event --mode now`
 
+### ⚠️ 任务注册铁律（所有任务，无例外）
+
+**每次 dispatch 前，必须先把任务写入 `active-tasks.json`。** 包括：
+- 临时 hotfix（FIX-xxx）
+- 部署任务（DEPLOY-xxx）
+- 一次性脚本任务
+
+跳过注册 = dispatch.sh 警告 "task not found" = on-complete.sh 状态更新失效 = 丢失追踪。
+
+哪怕是一行的 fix，也要先：
+```bash
+# 在 active-tasks.json 的 tasks 数组里加一条，再 dispatch
+```
+
 ### Phase 4: Dispatch
 
 For each ready task (status=pending, dependencies met):
