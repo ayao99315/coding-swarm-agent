@@ -30,18 +30,24 @@
 
 ### Skill
 - 名称: coding-swarm-agent（原 agent-swarm，已改名）
-- ClawHub: coding-swarm-agent@1.1.1
+- ClawHub: coding-swarm-agent@1.2.0（2026-03-20 更新）
 - GitHub: github.com/ayao99315/coding-swarm-agent
 - 路径: skills/coding-swarm-agent/SKILL.md
 
-### 架构 v2.2（2026-03-19 重大改进）
+### 架构 v2.3（2026-03-20 重大改进）
 - **dispatch 链路简化（方案B）**: 去掉 webhook → isolated agent 这一跳
   - on-complete.sh 直接发 Telegram 通知主 session
   - update-task-status.sh 内置同步解锁：task done → 自动把依赖它的 blocked 任务改为 pending
   - 可靠性从 ~50% 提升到 ~95%
-- **--prompt-file 修复**: 改为写临时文件 + stdin 传参，彻底解决 markdown/引号转义问题
+- **--prompt-file 修复**: 兼容单字符串/argv 两种调用，macOS mktemp 修复，Codex 真正走 stdin
 - **swarm 完成总汇报**: 所有任务 done 时自动发 token 汇总消息
 - **parse-tokens.sh**: 支持 Codex `tokens used\nNNNN` 格式
+- **批次生命周期管理（2026-03-20 新增）**:
+  - 一批次一文件：`swarm/active-tasks.json`（当前）+ `swarm/history/YYYY-MM-DD-<project>.json`（已归档）
+  - 新增 `swarm-new-batch.sh`：一键 archive 旧批次 + 新建 active-tasks.json
+  - on-complete.sh swarm-complete 改为判断当前文件全部任务 done（无需 meta 补丁）
+  - active-tasks.json 新增顶层字段：`batch_id`、`project`、`repo`
+  - 历史迁移：旧单文件已拆分为 4 个标准批次文件存入 history/
 
 ### 模型配置
 - cc-plan: claude-opus-4-6

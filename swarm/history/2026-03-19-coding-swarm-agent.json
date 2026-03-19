@@ -1,0 +1,198 @@
+{
+  "batch_id": "2026-03-19-coding-swarm-agent",
+  "project": "coding-swarm-agent",
+  "repo": "github.com/ayao99315/coding-swarm-agent",
+  "created_at": "2026-03-19T07:55:38.119789Z",
+  "updated_at": "2026-03-19T20:13:44.403420+00:00",
+  "tasks": [
+    {
+      "id": "SWARM-T001",
+      "name": "修复 on-complete.sh：swarm 全部完成时发总汇报 + parse-tokens.sh 支持 Codex 格式",
+      "domain": "backend",
+      "status": "done",
+      "agent": "codex-1",
+      "review_level": "full",
+      "depends_on": [],
+      "created_at": "2026-03-19T07:55:38.119789Z",
+      "updated_at": "2026-03-19T08:02:39.064Z",
+      "commits": [
+        "61fba08"
+      ],
+      "note": "on-complete.sh：swarm 全部完成时发总汇报 + token 统计修复。61fba08 已提交。"
+    },
+    {
+      "id": "SWARM-REVIEW",
+      "name": "整体 review coding-swarm-agent skill 脚本",
+      "domain": "backend",
+      "status": "done",
+      "agent": "cc-review",
+      "review_level": "full",
+      "depends_on": [
+        "SWARM-T001"
+      ],
+      "created_at": "2026-03-19T07:55:38.119789Z",
+      "updated_at": "2026-03-19T08:20:38.076203+00:00",
+      "commits": [
+        "363d7ce"
+      ],
+      "tokens": {
+        "input": 8,
+        "output": 13295,
+        "cache_read": 189032,
+        "cache_write": 38498
+      }
+    },
+    {
+      "id": "SWARM-T002",
+      "name": "方案B：on-complete.sh 去掉 webhook，改为直接通知主 session；update-task-status.sh 内置 blocked→pending 解锁",
+      "domain": "backend",
+      "status": "done",
+      "agent": "codex-1",
+      "review_level": "full",
+      "depends_on": [],
+      "created_at": "2026-03-19T08:26:50.500875Z",
+      "updated_at": "2026-03-19T08:41:19.821Z",
+      "commits": [
+        "e2abe56"
+      ],
+      "tokens": {
+        "input": 36231,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      },
+      "note": "方案B完成：on-complete.sh去掉webhook改直接通知主session；update-task-status.sh内置blocked→pending解锁。"
+    },
+    {
+      "id": "SWARM-T003",
+      "name": "修复 dispatch.sh --prompt-file：改为写临时文件 + codex --input-file / claude stdin 管道",
+      "domain": "backend",
+      "status": "done",
+      "agent": "codex-1",
+      "review_level": "full",
+      "depends_on": [
+        "SWARM-T002"
+      ],
+      "created_at": "2026-03-19T08:26:50.500875Z",
+      "updated_at": "2026-03-19T08:44:22.015Z",
+      "commits": [
+        "bcc6d54"
+      ],
+      "note": "dispatch.sh: prompt 写入 tempfile，避免 bash 引号嵌套问题。"
+    },
+    {
+      "id": "SWARM-T004",
+      "name": "端到端测试：跑一个 2 任务的 mini swarm 验证全链路（T002 fix + T003 fix）",
+      "domain": "backend",
+      "status": "done",
+      "agent": "codex-1",
+      "review_level": "full",
+      "depends_on": [
+        "SWARM-T002",
+        "SWARM-T003"
+      ],
+      "created_at": "2026-03-19T08:26:50.500875Z",
+      "updated_at": "2026-03-19T09:00:03.028Z",
+      "commits": [
+        "bcc6d54"
+      ],
+      "note": "端到端测试完成。dispatch.sh 已改为写 prompt 到 tempfile 避免引号问题。bcc6d54。"
+    },
+    {
+      "id": "SWARM-REVIEW2",
+      "name": "Review SWARM-T002+T003 修改，确认链路简化正确且 --prompt-file 彻底修好",
+      "domain": "backend",
+      "status": "done",
+      "agent": "cc-review",
+      "review_level": "full",
+      "depends_on": [
+        "SWARM-T004"
+      ],
+      "created_at": "2026-03-19T08:26:50.500875Z",
+      "updated_at": "2026-03-19T09:21:58.216Z",
+      "note": "Review 通过。SWARM-T002+T003+T004 链路简化及 --prompt-file 修复确认正确。"
+    },
+    {
+      "id": "SWARM-T005",
+      "name": "修复 dispatch.sh 调用兼容性与 prompt-file 链路（含 macOS mktemp、Codex stdin）",
+      "domain": "backend",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "done",
+      "review_level": "full",
+      "milestone": null,
+      "note": "处理 SWARM-REVIEW2 提出的 dispatch.sh 三个遗留问题，并同步修正文档示例。",
+      "commits": [
+        "63a4f9e"
+      ],
+      "issue": null,
+      "depends_on": [],
+      "created_at": "2026-03-19T17:27:08Z",
+      "updated_at": "2026-03-19T17:34:34.376263+00:00",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 105534,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "SWARM-T006",
+      "name": "修复 on-complete.sh 的 swarm-complete 汇总范围，仅统计当前批次任务",
+      "domain": "backend",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "done",
+      "review_level": "full",
+      "milestone": null,
+      "note": "on-complete.sh: swarm-complete 汇总范围改为 batch_started_at 过滤，fallback 向后兼容。",
+      "commits": [
+        "f3d6cd0"
+      ],
+      "issue": null,
+      "depends_on": [
+        "SWARM-T005"
+      ],
+      "created_at": "2026-03-19T17:27:08Z",
+      "updated_at": "2026-03-19T17:38:39.599Z",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "SWARM-REVIEW3",
+      "name": "Review SWARM-T005+T006，确认 dispatch 与 swarm-complete 两类遗留问题已彻底修复",
+      "domain": "backend",
+      "agent": "cc-review",
+      "tmux": "cc-review",
+      "status": "done",
+      "review_level": "full",
+      "milestone": null,
+      "note": "重点检查 dispatch.sh 调用兼容性、prompt-file 传递、macOS mktemp，以及 on-complete 仅统计当前批次任务。",
+      "commits": [
+        "0692fbc"
+      ],
+      "issue": null,
+      "depends_on": [
+        "SWARM-T006"
+      ],
+      "created_at": "2026-03-19T17:27:08Z",
+      "updated_at": "2026-03-19T20:13:44.403420+00:00",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 9,
+        "output": 4658,
+        "cache_read": 219321,
+        "cache_write": 20786
+      }
+    }
+  ]
+}

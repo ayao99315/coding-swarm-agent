@@ -1,0 +1,116 @@
+{
+  "batch_id": "2026-03-18-PolyGo-Backtest",
+  "project": "PolyGo-Backtest",
+  "repo": "github.com/ayao99315/PolyGo",
+  "created_at": "2026-03-18T07:36:00.000Z",
+  "updated_at": "2026-03-18T08:21:00+00:00",
+  "tasks": [
+    {
+      "id": "B000",
+      "name": "回测方案规划",
+      "domain": "backend",
+      "agent": "cc-plan",
+      "tmux": "cc-plan",
+      "status": "done",
+      "review_level": "scan",
+      "milestone": null,
+      "note": "已完成。输出 docs/backtest-plan.md，包含 B001/B002/B003 子任务。",
+      "commits": [
+        "3c31ddc"
+      ],
+      "issue": null,
+      "depends_on": [],
+      "created_at": "2026-03-18T07:36:00.000Z",
+      "updated_at": "2026-03-18T07:41:56.078113+00:00",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "B001",
+      "name": "数据层：DB 加载 + CLOB 价格拉取 + 本地缓存",
+      "domain": "backend",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "done",
+      "review_level": "scan",
+      "note": "完成。133 games加载成功，token IDs解析成功。但发现阻塞：CLOB prices-history对历史市场返回空。decisions表有199条策略快照可用。需爸爸决策方向。",
+      "commits": [
+        "d8a82fe",
+        "dbc1401"
+      ],
+      "issue": null,
+      "depends_on": [],
+      "created_at": "2026-03-18T07:40:43+00:00",
+      "updated_at": "2026-03-18T08:04:00+00:00",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "B002",
+      "name": "回测引擎：信号生成 + 仓位模拟",
+      "domain": "backend",
+      "agent": "codex-2",
+      "tmux": "codex-2",
+      "status": "done",
+      "review_level": "full",
+      "note": "已完成+review通过。signal-generator.ts(274行) + position-simulator.ts(152行)，typecheck通过。",
+      "commits": [
+        "2aa45d5",
+        "4d392c7"
+      ],
+      "issue": null,
+      "depends_on": [
+        "B001"
+      ],
+      "created_at": "2026-03-18T07:40:43+00:00",
+      "updated_at": "2026-03-18T08:16:21.614Z",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "B003",
+      "name": "指标计算 + CLI 报告 + 入口编排",
+      "domain": "backend",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "done",
+      "review_level": "scan",
+      "note": "已完成。index.ts+calculator.ts+cli-reporter.ts共482行。CLI可运行：133 games, 22 trades有效数据。结果：总亏-$11.50，胜率27.3%，L1表现最好(50%胜率)。",
+      "commits": [
+        "4d392c7"
+      ],
+      "issue": null,
+      "depends_on": [
+        "B002"
+      ],
+      "created_at": "2026-03-18T07:40:43+00:00",
+      "updated_at": "2026-03-18T08:21:00+00:00",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    }
+  ]
+}
