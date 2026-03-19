@@ -221,23 +221,37 @@ except Exception:
     raise SystemExit(0)
 
 tasks = data.get("tasks", [])
-if not tasks or any(t.get("status") != "done" for t in tasks):
+
+# Determine current batch: prefer meta.current_swarm_batch.task_ids (explicit ID list),
+# then fall back to batch_started_at timestamp filter, then all tasks.
+meta_batch = data.get("meta", {}).get("current_swarm_batch", {})
+batch_task_ids = meta_batch.get("task_ids")
+batch_project = meta_batch.get("project") or data.get("project") or "swarm"
+
+task_map = {t["id"]: t for t in tasks}
+
+if batch_task_ids:
+    batch_tasks = [task_map[tid] for tid in batch_task_ids if tid in task_map]
+    if not batch_tasks:
+        batch_tasks = tasks  # fallback if IDs not found
+else:
+    batch_started_at = data.get("batch_started_at")
+    if batch_started_at:
+        batch_tasks = [t for t in tasks if (t.get("updated_at") or "") >= batch_started_at]
+        if not batch_tasks:
+            batch_tasks = tasks
+    else:
+        batch_tasks = tasks
+
+# Only fire swarm-complete when ALL batch tasks are done (not all tasks in file)
+if not batch_tasks or any(t.get("status") != "done" for t in batch_tasks):
     print("")
     raise SystemExit(0)
-
-# Only count tasks from the current batch (batch_started_at if present)
-batch_started_at = data.get("batch_started_at")
-if batch_started_at:
-    batch_tasks = [t for t in tasks if (t.get("updated_at") or "") >= batch_started_at]
-    if not batch_tasks:
-        batch_tasks = tasks  # fallback
-else:
-    batch_tasks = tasks
 
 fingerprint = hashlib.sha1(
     json.dumps(
         {
-            "project": data.get("project"),
+            "project": batch_project,
             "tasks": [
                 {"id": t.get("id"), "created_at": t.get("created_at")}
                 for t in batch_tasks
@@ -258,7 +272,7 @@ total_input = sum(t.get("tokens", {}).get("input", 0) for t in batch_tasks)
 total_output = sum(t.get("tokens", {}).get("output", 0) for t in batch_tasks)
 total_cache_r = sum(t.get("tokens", {}).get("cache_read", 0) for t in batch_tasks)
 total_cache_w = sum(t.get("tokens", {}).get("cache_write", 0) for t in batch_tasks)
-project = data.get("project") or "swarm"
+project = batch_project
 done_count = len(batch_tasks)
 commits = []
 for task in batch_tasks:
