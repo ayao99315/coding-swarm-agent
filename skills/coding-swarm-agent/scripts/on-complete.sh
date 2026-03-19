@@ -222,26 +222,9 @@ except Exception:
 
 tasks = data.get("tasks", [])
 
-# Determine current batch: prefer meta.current_swarm_batch.task_ids (explicit ID list),
-# then fall back to batch_started_at timestamp filter, then all tasks.
-meta_batch = data.get("meta", {}).get("current_swarm_batch", {})
-batch_task_ids = meta_batch.get("task_ids")
-batch_project = meta_batch.get("project") or data.get("project") or "swarm"
-
-task_map = {t["id"]: t for t in tasks}
-
-if batch_task_ids:
-    batch_tasks = [task_map[tid] for tid in batch_task_ids if tid in task_map]
-    if not batch_tasks:
-        batch_tasks = tasks  # fallback if IDs not found
-else:
-    batch_started_at = data.get("batch_started_at")
-    if batch_started_at:
-        batch_tasks = [t for t in tasks if (t.get("updated_at") or "") >= batch_started_at]
-        if not batch_tasks:
-            batch_tasks = tasks
-    else:
-        batch_tasks = tasks
+# Current batch = all tasks in the active file (new architecture: one file per batch)
+batch_project = data.get("project") or "swarm"
+batch_tasks = tasks
 
 # Only fire swarm-complete when ALL batch tasks are done (not all tasks in file)
 if not batch_tasks or any(t.get("status") != "done" for t in batch_tasks):
