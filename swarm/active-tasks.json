@@ -3,7 +3,7 @@
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
   "created_at": "2026-03-19T23:17:24Z",
-  "updated_at": "2026-03-19T23:24:08.048537+00:00",
+  "updated_at": "2026-03-19T23:25:07.878367+00:00",
   "tasks": [
     {
       "id": "SWARM-ARCH-T001",
@@ -42,14 +42,15 @@
       "milestone": null,
       "note": "依赖 T001 确认新结构后再改 on-complete",
       "commits": [
-        "4f8c1b5"
+        "4f8c1b5",
+        "63e11c9"
       ],
       "issue": null,
       "depends_on": [
         "SWARM-ARCH-T001"
       ],
       "created_at": "2026-03-19T23:17:38Z",
-      "updated_at": "2026-03-19T23:24:08.048537+00:00",
+      "updated_at": "2026-03-19T23:25:07.878367+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
