@@ -774,18 +774,45 @@ Agent 完成 → 编排层验证 scope
 ### 13.1 文件位置
 
 ```
-~/.openclaw/workspace/swarm/active-tasks.json   # 当前任务
-~/.openclaw/workspace/swarm/notify-target        # Telegram chat_id
-~/.openclaw/workspace/swarm/project-dir          # 项目路径
-/tmp/agent-swarm-signals.jsonl                   # 事件信号（运行时）
+~/.openclaw/workspace/swarm/active-tasks.json         # 当前活跃批次（唯一）
+~/.openclaw/workspace/swarm/history/                   # 已归档批次（每批次一个文件）
+  YYYY-MM-DD-<project>.json
+  YYYY-MM-DD-<project>-2.json                          # 同天同项目第二批次
+~/.openclaw/workspace/swarm/notify-target              # Telegram chat_id
+~/.openclaw/workspace/swarm/project-dir                # 项目路径
+~/.openclaw/workspace/swarm/migrate-history.py         # 旧格式迁移工具
+/tmp/agent-swarm-signals.jsonl                         # 事件信号（运行时）
 ```
 
-### 13.2 数据结构
+### 13.2 批次生命周期（v2.6 新增）
+
+**核心原则：一批次 = 一文件**
+
+批次定义为一个连续工作上下文：一个 feature 从头到尾、一次 bugfix+deploy、一轮脚本修复。同一天两次任务 → 两个文件（加 `-2` 序号）。
+
+**开新批次时**，调用 `swarm-new-batch.sh`：
+
+```bash
+scripts/swarm-new-batch.sh --project <name> [--repo <github-url>]
+
+# 内部做三件事：
+# 1. archive 当前 active-tasks.json → history/YYYY-MM-DD-<project>.json
+# 2. 写入全新 active-tasks.json（含 batch_id、project、repo、空 tasks）
+# 3. 打印确认
+```
+
+**归档命名规则：** `YYYY-MM-DD-<project>[-<seq>].json`，同天同 project 自动加 `-2`、`-3`。
+
+**swarm-complete 判断**：on-complete.sh 只检查当前 `active-tasks.json` 里所有任务是否全 done，不再需要 meta 补丁。
+
+### 13.3 数据结构
 
 ```json
 {
+  "batch_id": "2026-03-20-PolyGo",
   "project": "PolyGo",
   "repo": "github.com/ayao99315/PolyGo",
+  "created_at": "ISO8601",
   "updated_at": "ISO8601",
   "tasks": [
     {
@@ -815,7 +842,7 @@ Agent 完成 → 编排层验证 scope
 }
 ```
 
-### 13.3 状态枚举
+### 13.4 状态枚举
 
 | 状态 | 含义 |
 |------|------|
@@ -827,7 +854,7 @@ Agent 完成 → 编排层验证 scope
 | `failed` | 失败（已达最大重试次数） |
 | `escalated` | 已升级给人类处理 |
 
-### 13.4 自动解锁规则
+### 13.5 自动解锁规则
 
 当任务标记 `done` 时，扫描所有 `blocked` 任务。若其 `depends_on` 列表中的任务全部为 `done`，自动翻转为 `pending`。
 
@@ -1070,6 +1097,17 @@ git add -A && git commit -m "[预写好的 message]" && git push
 | dispatch.sh --prompt-file 引号转义地狱 | prompt 含 markdown/代码块/引号时，bash 层层转义导致 agent 收到乱码或 command not found | ✅ dispatch.sh 将 prompt 写入 tmpfile，agent 通过 stdin 管道读取，彻底绕开 shell 转义 |
 | macOS tmpfile 不唯一 | `mktemp "/tmp/...XXXXXX"` 在 macOS 下不替换 XXXXXX，临时文件冲突 | ✅ 改为 `mktemp "/tmp/agent-swarm-prompt-${TASK_ID}-${SESSION}.XXXXXX.txt"` 格式，macOS/Linux 均兼容 |
 | swarm 全部完成无汇总 | 每个任务单独通知，最后一批并发完成时没有全局汇报 | ✅ on-complete.sh 检测所有任务 done 时，发总汇报（项目/任务数/commit 数/token 汇总），用 sent 文件做幂等去重 |
+
+#### v2.5 → v2.6：批次生命周期管理 + dispatch 彻底加固（2026-03-20）
+
+| 问题 | v2.5 状态 | v2.6 修复 |
+|------|----------|----------|
+| 所有项目任务堆进同一个文件 | active-tasks.json 不断追加，历史任务与当前任务混在一起；`project` 字段只记最后一个项目 | ✅ 一批次一文件：`swarm-new-batch.sh` 归档旧批次到 `history/YYYY-MM-DD-<project>.json`，新建干净的 active-tasks.json |
+| swarm-complete 统计范围错误 | 历史任务全为 done → 每次新批次结束都会误发 PolyGo-Backtest 的汇总（30 任务/820K tokens） | ✅ 改为判断当前文件全部任务 done，无需 meta 补丁；project 字段从 batch 级读取，不再错 |
+| active-tasks.json 无批次标识 | 无法从文件本身判断属于哪个项目/哪次工作 | ✅ 新增顶层字段：`batch_id`（格式 `YYYY-MM-DD-<project>`）、`project`、`repo`、`created_at` |
+| dispatch.sh 调用方式不一致 | 文档示例用"单字符串命令"，脚本内部按 argv 解析；按文档调用会 `command not found` | ✅ dispatch.sh 同时兼容单字符串/argv 两种调用；文档统一改为推荐的 argv 写法 |
+| Codex --prompt-file 没真正走文件 | 把 tmpfile 内容重新拼回 argv 末尾，只解决部分 quoting 问题 | ✅ Codex 路径改为 stdin 管道（`cat prompt | codex exec`），Claude 路径不变，两者都稳 |
+| 旧历史数据格式不兼容 | 单文件包含 4 个项目 30 个任务，无 batch_id | ✅ migrate-history.py 一键拆分：按项目/日期分组，输出标准批次文件到 history/ |
 
 ### 18.3 📈 未来改进方向
 
