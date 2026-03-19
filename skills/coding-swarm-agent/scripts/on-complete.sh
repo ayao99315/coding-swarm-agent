@@ -222,6 +222,85 @@ PYEOF
   fi
 fi
 
+# ── Swarm complete check ──────────────────────────────────────────────────
+# If all tasks are now done, emit one full summary for this swarm.
+COMPLETE_SENT_DIR="/tmp/agent-swarm-complete"
+mkdir -p "$COMPLETE_SENT_DIR"
+
+if [[ -f "$TASKS_FILE" && -n "$NOTIFY_TARGET" ]]; then
+  export COMPLETE_SENT_DIR
+  COMPLETE_MSG=$(python3 - <<'PYEOF'
+import hashlib
+import json
+import os
+from pathlib import Path
+
+tasks_file = Path(os.path.expanduser("~/.openclaw/workspace/swarm/active-tasks.json"))
+sent_dir = Path(os.environ["COMPLETE_SENT_DIR"])
+
+try:
+    data = json.loads(tasks_file.read_text())
+except Exception:
+    print("")
+    raise SystemExit(0)
+
+tasks = data.get("tasks", [])
+if not tasks or any(t.get("status") != "done" for t in tasks):
+    print("")
+    raise SystemExit(0)
+
+fingerprint = hashlib.sha1(
+    json.dumps(
+        {
+            "project": data.get("project"),
+            "tasks": [
+                {"id": t.get("id"), "created_at": t.get("created_at")}
+                for t in tasks
+            ],
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+).hexdigest()
+sent_file = sent_dir / f"{fingerprint}.sent"
+if sent_file.exists():
+    print("")
+    raise SystemExit(0)
+
+sent_file.write_text(data.get("updated_at", "done"), encoding="utf-8")
+
+total_input = sum(t.get("tokens", {}).get("input", 0) for t in tasks)
+total_output = sum(t.get("tokens", {}).get("output", 0) for t in tasks)
+total_cache_r = sum(t.get("tokens", {}).get("cache_read", 0) for t in tasks)
+total_cache_w = sum(t.get("tokens", {}).get("cache_write", 0) for t in tasks)
+project = data.get("project") or "swarm"
+done_count = len(tasks)
+commits = []
+for task in tasks:
+    for commit in task.get("commits", []):
+        if commit and commit not in commits:
+            commits.append(commit)
+
+message = (
+    f"✅ Swarm 全部完成！\n"
+    f"项目: {project}\n"
+    f"任务: {done_count}/{done_count} done\n"
+    f"commits: {len(commits)}\n"
+    f"累计 tokens:\n"
+    f"  📥 input:      {total_input:,}\n"
+    f"  📤 output:     {total_output:,}\n"
+    f"  💾 cache_read: {total_cache_r:,}\n"
+    f"  📝 cache_write:{total_cache_w:,}"
+)
+print(message)
+PYEOF
+)
+  if [[ -n "$COMPLETE_MSG" ]]; then
+    openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
+      -m "$COMPLETE_MSG" --silent 2>/dev/null &
+  fi
+fi
+
 # ── Per-task notification (with token breakdown) ───────────────────────────
 if [[ -n "$NOTIFY_TARGET" ]]; then
   # Extract token numbers from TOKENS_JSON for the message
