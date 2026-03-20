@@ -3,7 +3,7 @@
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
   "created_at": "2026-03-20T00:46:33Z",
-  "updated_at": "2026-03-20T00:50:19.071539+00:00",
+  "updated_at": "2026-03-20T00:54:13.984369+00:00",
   "tasks": [
     {
       "id": "FIX-T001",
@@ -11,15 +11,17 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "pending",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
       "note": "make_temp_file 函数用 mktemp 但 macOS 下 XXXXXX 不被替换，改用 python3 -c 或 mktemp $tmp_base/${prefix}.XXXXXX 正确写法",
-      "commits": [],
+      "commits": [
+        "d9cefa8"
+      ],
       "issue": null,
       "depends_on": [],
       "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:50:19.071539+00:00",
+      "updated_at": "2026-03-20T00:51:09.485082+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -35,24 +37,26 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "pending",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
       "note": "当前 SKILL.md 示例用单个带引号字符串，但 dispatch.sh 解析为 argv 数组；需统一：要么改 SKILL.md 文档示例，要么改 dispatch.sh 的 legacy mode 处理，确保两种调用方式都能正确工作",
-      "commits": [],
+      "commits": [
+        "363d7ce"
+      ],
       "issue": null,
       "depends_on": [
         "FIX-T001"
       ],
       "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:52:08.446945+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0,
-        "cache_write": 0
+        "input": 8,
+        "output": 1049,
+        "cache_read": 169856,
+        "cache_write": 8737
       }
     },
     {
@@ -61,24 +65,27 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "pending",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
       "note": "on-complete.sh 的 swarm-complete 检查扫描整个 active-tasks.json 中所有 tasks，已由 swarm-new-batch.sh 保证每次新建时文件只含当前批次，但需验证逻辑是否正确；如有问题则修复",
-      "commits": [],
+      "commits": [
+        "d9cefa87feb9005ddfafa4052cc18586301d60c9",
+        "363d7ce"
+      ],
       "issue": null,
       "depends_on": [
         "FIX-T002"
       ],
       "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:52:52.697664+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0,
-        "cache_write": 0
+        "input": 4,
+        "output": 523,
+        "cache_read": 63833,
+        "cache_write": 4467
       }
     },
     {
@@ -87,17 +94,19 @@
       "domain": "backend",
       "agent": "cc-review",
       "tmux": "cc-review",
-      "status": "pending",
+      "status": "done",
       "review_level": "full",
       "milestone": null,
       "note": "重点检查：mktemp 修复是否 macOS/Linux 兼容，dispatch.sh 两种调用方式是否都通，on-complete swarm-complete 逻辑是否只统计当前批次",
-      "commits": [],
+      "commits": [
+        "d9cefa87feb9005ddfafa4052cc18586301d60c9"
+      ],
       "issue": null,
       "depends_on": [
         "FIX-T003"
       ],
       "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:54:13.984369+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
