@@ -3,7 +3,7 @@
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
   "created_at": "2026-03-20T01:29:20Z",
-  "updated_at": "2026-03-20T01:30:29.082373+00:00",
+  "updated_at": "2026-03-20T01:35:09.245640+00:00",
   "tasks": [
     {
       "id": "PLAN-T001",
@@ -11,18 +11,20 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "scan",
       "note": "在 SKILL.md 里加 Documentation Rules 章节，说明需求/设计/计划三层分工和目录规范",
-      "commits": [],
+      "commits": [
+        "dc8a90e"
+      ],
       "issue": null,
       "depends_on": [],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:30:29.082373+00:00",
+      "updated_at": "2026-03-20T01:33:03.853443+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
+        "input": 23209,
         "output": 0,
         "cache_read": 0,
         "cache_write": 0
@@ -34,7 +36,7 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "blocked",
+      "status": "running",
       "review_level": "scan",
       "note": "cc-plan prompt 模板加入强制输出设计文档到 docs/design/ 的要求",
       "commits": [],
@@ -43,7 +45,7 @@
         "PLAN-T001"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:35:08.919142+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -59,7 +61,7 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "blocked",
+      "status": "running",
       "review_level": "skip",
       "note": "新增需求文档模板，供 C 档复杂任务使用",
       "commits": [],
@@ -68,7 +70,7 @@
         "PLAN-T001"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:35:09.070727+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -111,7 +113,7 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "blocked",
+      "status": "running",
       "review_level": "skip",
       "note": "两个 repo 各建 docs/swarm/ docs/design/ docs/requirements/，迁移 PolyGo 已有文档，提交",
       "commits": [],
@@ -120,7 +122,7 @@
         "PLAN-T001"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:35:09.245640+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
