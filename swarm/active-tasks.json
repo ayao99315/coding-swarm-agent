@@ -3,7 +3,7 @@
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
   "created_at": "2026-03-20T01:29:20Z",
-  "updated_at": "2026-03-20T01:35:09.245640+00:00",
+  "updated_at": "2026-03-20T01:43:15.337260+00:00",
   "tasks": [
     {
       "id": "PLAN-T001",
@@ -36,23 +36,26 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "scan",
       "note": "cc-plan prompt 模板加入强制输出设计文档到 docs/design/ 的要求",
-      "commits": [],
+      "commits": [
+        "482bdd795e80dba3ded8e6aa2bfedfe30fa5598e",
+        "a763b70"
+      ],
       "issue": null,
       "depends_on": [
         "PLAN-T001"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:35:08.919142+00:00",
+      "updated_at": "2026-03-20T01:36:20.067797+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0,
-        "cache_write": 0
+        "input": 7,
+        "output": 1647,
+        "cache_read": 129400,
+        "cache_write": 4568
       }
     },
     {
@@ -61,16 +64,19 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "skip",
       "note": "新增需求文档模板，供 C 档复杂任务使用",
-      "commits": [],
+      "commits": [
+        "6d72cc6",
+        "1620be3"
+      ],
       "issue": null,
       "depends_on": [
         "PLAN-T001"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:35:09.070727+00:00",
+      "updated_at": "2026-03-20T01:39:39.942374+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -86,10 +92,13 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "blocked",
+      "status": "done",
       "review_level": "scan",
       "note": "playbook 第 5 章加 Plan 分档规范说明，第 18 章记录这次变更",
-      "commits": [],
+      "commits": [
+        "571f86fd0c08c84d11b4cd31e83cc66be923dffb",
+        "a763b70"
+      ],
       "issue": null,
       "depends_on": [
         "PLAN-T001",
@@ -97,14 +106,14 @@
         "PLAN-T003"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:42:00.196750+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0,
-        "cache_write": 0
+        "input": 9,
+        "output": 2267,
+        "cache_read": 309574,
+        "cache_write": 27367
       }
     },
     {
@@ -113,16 +122,19 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "skip",
       "note": "两个 repo 各建 docs/swarm/ docs/design/ docs/requirements/，迁移 PolyGo 已有文档，提交",
-      "commits": [],
+      "commits": [
+        "363d7ce",
+        "514821a"
+      ],
       "issue": null,
       "depends_on": [
         "PLAN-T001"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:35:09.245640+00:00",
+      "updated_at": "2026-03-20T01:39:39.982971+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -138,17 +150,19 @@
       "domain": "backend",
       "agent": "cc-review",
       "tmux": "cc-review",
-      "status": "blocked",
+      "status": "done",
       "review_level": "full",
       "note": "检查 SKILL.md/prompt-cc-plan.md/playbook.md 规范一致，docs 目录结构正确，没有遗漏",
-      "commits": [],
+      "commits": [
+        "571f86fd0c08c84d11b4cd31e83cc66be923dffb"
+      ],
       "issue": null,
       "depends_on": [
         "PLAN-T004",
         "PLAN-T005"
       ],
       "created_at": "2026-03-20T01:29:47Z",
-      "updated_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:43:15.337260+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
