@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-20T00:53:10.511404+00:00",
+  "updated_at": "2026-03-20T01:30:29.110431+00:00",
   "limits": {
     "max_codex": 4,
     "max_cc_frontend": 2,
@@ -32,10 +32,10 @@
       "type": "claude",
       "domain": "review",
       "tmux": "cc-review",
-      "status": "busy",
-      "current_task": "FIX-REVIEW",
+      "status": "idle",
+      "current_task": null,
       "spawned_at": null,
-      "last_seen": "2026-03-20T00:53:10.511404+00:00"
+      "last_seen": "2026-03-20T00:54:46.614271+00:00"
     },
     {
       "id": "codex-review",
@@ -46,36 +46,6 @@
       "current_task": null,
       "spawned_at": null,
       "last_seen": "2026-03-19T17:36:26.354660+00:00"
-    },
-    {
-      "id": "codex-2",
-      "type": "codex",
-      "domain": "backend",
-      "tmux": "codex-2",
-      "status": "idle",
-      "current_task": null,
-      "spawned_at": "2026-03-20T00:50:42Z",
-      "last_seen": "2026-03-20T00:50:42Z"
-    },
-    {
-      "id": "codex-3",
-      "type": "codex",
-      "domain": "backend",
-      "tmux": "codex-3",
-      "status": "idle",
-      "current_task": null,
-      "spawned_at": "2026-03-20T00:50:43Z",
-      "last_seen": "2026-03-20T00:50:43Z"
-    },
-    {
-      "id": "codex-4",
-      "type": "codex",
-      "domain": "backend",
-      "tmux": "codex-4",
-      "status": "idle",
-      "current_task": null,
-      "spawned_at": "2026-03-20T00:50:43Z",
-      "last_seen": "2026-03-20T00:50:43Z"
     }
   ]
 }

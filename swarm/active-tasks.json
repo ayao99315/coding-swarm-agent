@@ -1,27 +1,24 @@
 {
-  "batch_id": "2026-03-20-coding-swarm-agent",
+  "batch_id": "2026-03-20-coding-swarm-agent-2",
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
-  "created_at": "2026-03-20T00:46:33Z",
-  "updated_at": "2026-03-20T00:54:13.984369+00:00",
+  "created_at": "2026-03-20T01:29:20Z",
+  "updated_at": "2026-03-20T01:30:29.082373+00:00",
   "tasks": [
     {
-      "id": "FIX-T001",
-      "name": "修复 dispatch.sh macOS mktemp 不替换 XXXXXX 问题",
+      "id": "PLAN-T001",
+      "name": "更新 SKILL.md：加入三层 Plan 规范 + 文档目录结构",
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "done",
-      "review_level": "full",
-      "milestone": null,
-      "note": "make_temp_file 函数用 mktemp 但 macOS 下 XXXXXX 不被替换，改用 python3 -c 或 mktemp $tmp_base/${prefix}.XXXXXX 正确写法",
-      "commits": [
-        "d9cefa8"
-      ],
+      "status": "running",
+      "review_level": "scan",
+      "note": "在 SKILL.md 里加 Documentation Rules 章节，说明需求/设计/计划三层分工和目录规范",
+      "commits": [],
       "issue": null,
       "depends_on": [],
-      "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:51:09.485082+00:00",
+      "created_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:30:29.082373+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -32,81 +29,124 @@
       }
     },
     {
-      "id": "FIX-T002",
-      "name": "修复 dispatch.sh 调用方式：SKILL.md 文档示例与实际 argv 解析不一致",
+      "id": "PLAN-T002",
+      "name": "更新 prompt-cc-plan.md：要求 cc-plan 同时输出 docs/design/ 设计文档",
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "done",
-      "review_level": "full",
-      "milestone": null,
-      "note": "当前 SKILL.md 示例用单个带引号字符串，但 dispatch.sh 解析为 argv 数组；需统一：要么改 SKILL.md 文档示例，要么改 dispatch.sh 的 legacy mode 处理，确保两种调用方式都能正确工作",
-      "commits": [
-        "363d7ce"
-      ],
+      "status": "blocked",
+      "review_level": "scan",
+      "note": "cc-plan prompt 模板加入强制输出设计文档到 docs/design/ 的要求",
+      "commits": [],
       "issue": null,
       "depends_on": [
-        "FIX-T001"
+        "PLAN-T001"
       ],
-      "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:52:08.446945+00:00",
+      "created_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:29:47Z",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 8,
-        "output": 1049,
-        "cache_read": 169856,
-        "cache_write": 8737
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
       }
     },
     {
-      "id": "FIX-T003",
-      "name": "修复 on-complete.sh swarm-complete 判断范围：只统计当前批次任务",
+      "id": "PLAN-T003",
+      "name": "新增 references/prompt-requirements.md：需求文档模板",
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "done",
-      "review_level": "full",
-      "milestone": null,
-      "note": "on-complete.sh 的 swarm-complete 检查扫描整个 active-tasks.json 中所有 tasks，已由 swarm-new-batch.sh 保证每次新建时文件只含当前批次，但需验证逻辑是否正确；如有问题则修复",
-      "commits": [
-        "d9cefa87feb9005ddfafa4052cc18586301d60c9",
-        "363d7ce"
-      ],
+      "status": "blocked",
+      "review_level": "skip",
+      "note": "新增需求文档模板，供 C 档复杂任务使用",
+      "commits": [],
       "issue": null,
       "depends_on": [
-        "FIX-T002"
+        "PLAN-T001"
       ],
-      "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:52:52.697664+00:00",
+      "created_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:29:47Z",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 4,
-        "output": 523,
-        "cache_read": 63833,
-        "cache_write": 4467
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
       }
     },
     {
-      "id": "FIX-REVIEW",
-      "name": "Review FIX-T001+T002+T003：验证三个修复的正确性",
+      "id": "PLAN-T004",
+      "name": "更新 playbook.md：第 5 章加三层 plan 规范，第 18 章加 v2.6 条目",
+      "domain": "backend",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "blocked",
+      "review_level": "scan",
+      "note": "playbook 第 5 章加 Plan 分档规范说明，第 18 章记录这次变更",
+      "commits": [],
+      "issue": null,
+      "depends_on": [
+        "PLAN-T001",
+        "PLAN-T002",
+        "PLAN-T003"
+      ],
+      "created_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:29:47Z",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "PLAN-T005",
+      "name": "在 coding-swarm-agent 和 PolyGo 两个 repo 建立 docs/ 子目录结构",
+      "domain": "backend",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "blocked",
+      "review_level": "skip",
+      "note": "两个 repo 各建 docs/swarm/ docs/design/ docs/requirements/，迁移 PolyGo 已有文档，提交",
+      "commits": [],
+      "issue": null,
+      "depends_on": [
+        "PLAN-T001"
+      ],
+      "created_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:29:47Z",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "PLAN-REVIEW",
+      "name": "Review 所有变更：验证规范一致性、文档完整性、目录结构正确",
       "domain": "backend",
       "agent": "cc-review",
       "tmux": "cc-review",
-      "status": "done",
+      "status": "blocked",
       "review_level": "full",
-      "milestone": null,
-      "note": "重点检查：mktemp 修复是否 macOS/Linux 兼容，dispatch.sh 两种调用方式是否都通，on-complete swarm-complete 逻辑是否只统计当前批次",
-      "commits": [
-        "d9cefa87feb9005ddfafa4052cc18586301d60c9"
-      ],
+      "note": "检查 SKILL.md/prompt-cc-plan.md/playbook.md 规范一致，docs 目录结构正确，没有遗漏",
+      "commits": [],
       "issue": null,
       "depends_on": [
-        "FIX-T003"
+        "PLAN-T004",
+        "PLAN-T005"
       ],
-      "created_at": "2026-03-20T00:47:15.573879+00:00",
-      "updated_at": "2026-03-20T00:54:13.984369+00:00",
+      "created_at": "2026-03-20T01:29:47Z",
+      "updated_at": "2026-03-20T01:29:47Z",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
