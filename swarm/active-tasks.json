@@ -2,57 +2,24 @@
   "batch_id": "2026-03-20-coding-swarm-agent",
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
-  "created_at": "2026-03-19T23:17:24Z",
-  "updated_at": "2026-03-19T23:31:00.725081+00:00",
+  "created_at": "2026-03-20T00:46:33Z",
+  "updated_at": "2026-03-20T00:50:19.071539+00:00",
   "tasks": [
     {
-      "id": "SWARM-ARCH-T001",
-      "name": "新增 swarm-new-batch.sh：archive 旧批次 + 新建 active-tasks.json",
+      "id": "FIX-T001",
+      "name": "修复 dispatch.sh macOS mktemp 不替换 XXXXXX 问题",
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "done",
-      "review_level": "scan",
+      "status": "pending",
+      "review_level": "full",
       "milestone": null,
-      "note": "新增脚本，处理批次归档和新建逻辑",
-      "commits": [
-        "eafd88c"
-      ],
+      "note": "make_temp_file 函数用 mktemp 但 macOS 下 XXXXXX 不被替换，改用 python3 -c 或 mktemp $tmp_base/${prefix}.XXXXXX 正确写法",
+      "commits": [],
       "issue": null,
       "depends_on": [],
-      "created_at": "2026-03-19T23:17:38Z",
-      "updated_at": "2026-03-19T23:22:14.872347+00:00",
-      "attempts": 0,
-      "max_attempts": 3,
-      "tokens": {
-        "input": 38795,
-        "output": 0,
-        "cache_read": 0,
-        "cache_write": 0
-      }
-    },
-    {
-      "id": "SWARM-ARCH-T002",
-      "name": "修改 on-complete.sh：swarm-complete 改为判断当前文件全部任务 done，删除 meta 补丁",
-      "domain": "backend",
-      "agent": "codex-1",
-      "tmux": "codex-1",
-      "status": "done",
-      "review_level": "scan",
-      "milestone": null,
-      "note": "依赖 T001 确认新结构后再改 on-complete",
-      "commits": [
-        "4f8c1b5",
-        "63e11c9",
-        "2e654b6",
-        "1e3bc81"
-      ],
-      "issue": null,
-      "depends_on": [
-        "SWARM-ARCH-T001"
-      ],
-      "created_at": "2026-03-19T23:17:38Z",
-      "updated_at": "2026-03-19T23:26:38.611407+00:00",
+      "created_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:50:19.071539+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -63,61 +30,81 @@
       }
     },
     {
-      "id": "SWARM-ARCH-T003",
-      "name": "更新 SKILL.md：补充 swarm-new-batch.sh 使用说明和开新批次流程",
+      "id": "FIX-T002",
+      "name": "修复 dispatch.sh 调用方式：SKILL.md 文档示例与实际 argv 解析不一致",
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "done",
-      "review_level": "skip",
+      "status": "pending",
+      "review_level": "full",
       "milestone": null,
-      "note": "文档更新，依赖 T001 脚本接口稳定",
-      "commits": [
-        "90b7aff4a6c2ad672e853582461ac343895302e9",
-        "363d7ce"
-      ],
+      "note": "当前 SKILL.md 示例用单个带引号字符串，但 dispatch.sh 解析为 argv 数组；需统一：要么改 SKILL.md 文档示例，要么改 dispatch.sh 的 legacy mode 处理，确保两种调用方式都能正确工作",
+      "commits": [],
       "issue": null,
       "depends_on": [
-        "SWARM-ARCH-T001",
-        "SWARM-ARCH-T002"
+        "FIX-T001"
       ],
-      "created_at": "2026-03-19T23:17:38Z",
-      "updated_at": "2026-03-19T23:28:32.625527+00:00",
+      "created_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:47:15.573879+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 7,
-        "output": 941,
-        "cache_read": 166448,
-        "cache_write": 13327
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
       }
     },
     {
-      "id": "SWARM-ARCH-REVIEW",
-      "name": "Review SWARM-ARCH-T001+T002：验证 archive 逻辑与 swarm-complete 修改",
+      "id": "FIX-T003",
+      "name": "修复 on-complete.sh swarm-complete 判断范围：只统计当前批次任务",
       "domain": "backend",
-      "agent": "cc-review",
-      "tmux": "cc-review",
-      "status": "done",
+      "agent": "codex-1",
+      "tmux": "codex-1",
+      "status": "pending",
       "review_level": "full",
       "milestone": null,
-      "note": "重点检查 archive 命名、on-complete 全量判断、向后兼容",
-      "commits": [
-        "ea256e8"
-      ],
+      "note": "on-complete.sh 的 swarm-complete 检查扫描整个 active-tasks.json 中所有 tasks，已由 swarm-new-batch.sh 保证每次新建时文件只含当前批次，但需验证逻辑是否正确；如有问题则修复",
+      "commits": [],
       "issue": null,
       "depends_on": [
-        "SWARM-ARCH-T003"
+        "FIX-T002"
       ],
-      "created_at": "2026-03-19T23:17:38Z",
-      "updated_at": "2026-03-19T23:31:00.725081+00:00",
+      "created_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:47:15.573879+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 7,
-        "output": 1407,
-        "cache_read": 135638,
-        "cache_write": 6295
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "FIX-REVIEW",
+      "name": "Review FIX-T001+T002+T003：验证三个修复的正确性",
+      "domain": "backend",
+      "agent": "cc-review",
+      "tmux": "cc-review",
+      "status": "pending",
+      "review_level": "full",
+      "milestone": null,
+      "note": "重点检查：mktemp 修复是否 macOS/Linux 兼容，dispatch.sh 两种调用方式是否都通，on-complete swarm-complete 逻辑是否只统计当前批次",
+      "commits": [],
+      "issue": null,
+      "depends_on": [
+        "FIX-T003"
+      ],
+      "created_at": "2026-03-20T00:47:15.573879+00:00",
+      "updated_at": "2026-03-20T00:47:15.573879+00:00",
+      "attempts": 0,
+      "max_attempts": 3,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
       }
     }
   ]

@@ -43,7 +43,15 @@ fi
 make_temp_file() {
   local prefix="$1"
   local tmp_base="${TMPDIR:-/tmp}"
-  mktemp "${tmp_base%/}/${prefix}.XXXXXX"
+  python3 -c '
+import os
+import sys
+import tempfile
+
+fd, path = tempfile.mkstemp(prefix=sys.argv[1] + ".", dir=sys.argv[2])
+os.close(fd)
+print(path)
+' "$prefix" "${tmp_base%/}"
 }
 
 COMMAND_ARGS=()
