@@ -213,7 +213,7 @@ print("✅ Registered FIX-001 + DEPLOY-001 (chained)")
 EOF
 ```
 
-注册完 → dispatch FIX → FIX 完成后 on-complete.sh 自动解锁 DEPLOY → 自动 dispatch。
+注册完 → dispatch FIX → FIX 完成后 on-complete.sh 自动解锁 DEPLOY 为 pending → orchestrator 被 event 唤醒后 dispatch。
 
 ## Hotfix Flow（快速修复链路）
 
@@ -253,7 +253,7 @@ $SKILL_DIR/scripts/dispatch.sh cc-frontend FIX-XXX --prompt-file /tmp/fix-xxx-pr
   claude --model claude-sonnet-4-6 --permission-mode bypassPermissions \
   --no-session-persistence --print --output-format json
 
-# DEPLOY-XXX 在 FIX-XXX on-complete 后自动解锁并 dispatch
+# DEPLOY-XXX 在 FIX-XXX on-complete 后自动解锁为 pending；orchestrator 被 event 唤醒后 dispatch
 ```
 
 **规则：hotfix 和 deploy 永远成对注册，deploy 永远依赖 fix。**
@@ -278,21 +278,26 @@ For each ready task (status=pending, dependencies met):
   dispatch.sh automatically:
   1. Updates active-tasks.json status to `running`
   2. Appends a force-commit check after agent finishes (catches forgotten commits)
-  3. Calls on-complete.sh which updates status to `done`/`failed` + triggers webhook agent
+  3. Calls on-complete.sh which updates status to `done`/`failed` + fires `openclaw system event` to wake orchestrator (AI)
 
 **Parallel dispatch:** OK if file scopes don't overlap. Check before dispatching.
 
 ### Phase 5: Event-Driven Monitor
 
-**Primary (instant — webhook-driven):**
+**Primary (instant — event-driven):**
 
 1. **post-commit hook** — fires on every git commit. Writes signal + auto-pushes.
 2. **on-complete.sh** — fires when agent command finishes. Does three things:
    a. `update-task-status.sh` — atomically updates active-tasks.json (status + commit + auto-unblock dependents)
-   b. `POST /hooks/agent` — triggers an **isolated agent turn** via OpenClaw webhook. This agent reads fresh active-tasks.json, verifies scope, handles review_level, and dispatches next pending tasks.
-   c. `openclaw message send` — backup Telegram notification to human.
+   b. `openclaw system event --text "Done: $TASK_ID" --mode now` — wakes the main session orchestrator (AI)
+   c. `openclaw message send` — Telegram notification to human.
 
-The webhook agent runs on a lightweight model (sonnet) with `sessionKey: "hook:swarm:dispatch"` for multi-turn context.
+The orchestrator (AI main session), once woken by the event, is responsible for:
+- Verifying commit scope (reading `git diff`)
+- Dispatching cross-review (full level)
+- Dispatching the next pending task
+
+> "Event-driven" here means AI orchestrator responds to events — not unattended script automation.
 
 **Fallback (heartbeat):** HEARTBEAT.md checks the signal file periodically as a safety net.
 
@@ -363,14 +368,15 @@ openclaw message send --channel telegram --target <chat_id> -m "✅ All swarm ta
 The complete event-driven cycle:
 ```
 Dispatch task → Agent works → Agent commits → post-commit hook fires
-→ Orchestrator wakes → Verify commit scope → Dispatch cross-review
-→ Review agent finishes → on-complete.sh fires → Orchestrator wakes
-→ Check review result → Pass: mark done, unblock & dispatch next
-                       → Fail: return to original agent with feedback
+→ on-complete.sh: update status + openclaw system event → Orchestrator wakes (AI)
+→ Orchestrator: verify commit scope → dispatch cross-review
+→ Review agent finishes → on-complete.sh: update status + openclaw system event → Orchestrator wakes (AI)
+→ Orchestrator: check review result → Pass: mark done, unblock & dispatch next
+                                     → Fail: return to original agent with feedback
 → All tasks done → Notify human
 ```
 
-No polling. No manual check-ins. Human only intervenes on escalations.
+No polling. No manual check-ins. "Automatic" means AI orchestrator responds to `openclaw system event` — not unattended script automation. Human only intervenes on escalations.
 
 ## Dispatch Notification Format
 
