@@ -3,7 +3,7 @@
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
   "created_at": "2026-03-20T05:41:44Z",
-  "updated_at": "2026-03-20T05:45:11.744466+00:00",
+  "updated_at": "2026-03-20T05:49:21.473215+00:00",
   "tasks": [
     {
       "id": "FIX-H1H2H3",
@@ -59,21 +59,23 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "scan",
       "note": "纯文档修改，与脚本修改无依赖，可并行",
-      "commits": [],
+      "commits": [
+        "2d7ba0d"
+      ],
       "issue": null,
       "depends_on": [],
       "created_at": "2026-03-20T05:43:56Z",
-      "updated_at": "2026-03-20T05:45:11.744466+00:00",
+      "updated_at": "2026-03-20T05:49:21.473215+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0,
-        "cache_write": 0
+        "input": 17,
+        "output": 8142,
+        "cache_read": 667799,
+        "cache_write": 29764
       }
     },
     {
