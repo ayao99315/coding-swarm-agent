@@ -1,14 +1,17 @@
 {
   "agent": "main",
-  "updated_at": "2026-03-20T08:49:23+08:00",
+  "updated_at": "2026-03-20T15:12:00+08:00",
   "date": "2026-03-20",
-  "summary": "完成 FIX-T001 代码修复与 macOS 验证：dispatch.sh 的 make_temp_file 改为 python3 tempfile 实现，规避 mktemp 模板兼容性问题。",
+  "summary": "coding-swarm-agent 全天大改：批次生命周期管理、Plan三层规范、ARCH-REVIEW H1-H5全部修复，发布v1.3.0",
   "tasks_done": [
-    "FIX-T001: 仅修改 dispatch.sh 的 make_temp_file，改用 python3 tempfile.mkstemp 生成跨 macOS/Linux 的唯一临时文件"
+    "SWARM-T005/T006/REVIEW3: dispatch.sh/on-complete.sh 修复，链路简化",
+    "SWARM-ARCH-T001~T003+REVIEW: swarm-new-batch.sh + 批次生命周期架构",
+    "PLAN-T001~T005+REVIEW: Plan三层规范(需求/设计/计划) + docs目录结构",
+    "FIX-H1H2H3: flock race guard + tmux字段写入 + heartbeat刷新",
+    "FIX-H4: force-commit git add -A → git add -u 安全修复",
+    "FIX-H5: SKILL.md 删旧webhook描述，改为openclaw system event说明"
   ],
-  "tasks_pending": [
-    "提交与推送：当前环境禁止写 .git/index.lock，需在可写 git 环境中执行 `git commit -m \"fix(dispatch): fix mktemp template compatibility on macOS\"` 并 push"
-  ],
+  "tasks_pending": [],
   "current_project": "coding-swarm-agent",
   "tokens": {
     "codex_input": 0,
@@ -16,6 +19,6 @@
     "cc_input": 0,
     "cc_output": 0
   },
-  "blockers": "Sandbox 禁止写入 `.git`，`git commit` 报错：`fatal: Unable to create '.git/index.lock': Operation not permitted`。",
-  "notes": "验证已完成：bash -n 通过；在 macOS 上执行 `make_temp_file test` 连续返回两条不同的临时文件路径。"
+  "blockers": null,
+  "notes": "coding-swarm-agent@1.3.0 已发布ClawHub。早上FIX-T001的git commit卡住问题已在后续批次中解决，不再是blocker。所有任务全部done，repo干净。"
 }
