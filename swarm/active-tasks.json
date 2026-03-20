@@ -3,7 +3,7 @@
   "project": "coding-swarm-agent",
   "repo": "github.com/ayao99315/coding-swarm-agent",
   "created_at": "2026-03-20T05:41:44Z",
-  "updated_at": "2026-03-20T05:49:21.473215+00:00",
+  "updated_at": "2026-03-20T05:55:53.379484+00:00",
   "tasks": [
     {
       "id": "FIX-H1H2H3",
@@ -11,18 +11,20 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "running",
+      "status": "done",
       "review_level": "full",
       "note": "H1+H2+H3 集中在同两个文件，一次修完",
-      "commits": [],
+      "commits": [
+        "34f30a7"
+      ],
       "issue": null,
       "depends_on": [],
       "created_at": "2026-03-20T05:43:56Z",
-      "updated_at": "2026-03-20T05:45:08.576796+00:00",
+      "updated_at": "2026-03-20T05:51:01.742196+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
-        "input": 0,
+        "input": 71143,
         "output": 0,
         "cache_read": 0,
         "cache_write": 0
@@ -34,16 +36,18 @@
       "domain": "backend",
       "agent": "codex-1",
       "tmux": "codex-1",
-      "status": "blocked",
+      "status": "done",
       "review_level": "scan",
       "note": "H4 单独拆，依赖 H1H2H3 完成后的 dispatch.sh 版本",
-      "commits": [],
+      "commits": [
+        "7ea9d00"
+      ],
       "issue": null,
       "depends_on": [
         "FIX-H1H2H3"
       ],
       "created_at": "2026-03-20T05:43:56Z",
-      "updated_at": "2026-03-20T05:43:56Z",
+      "updated_at": "2026-03-20T05:52:59.876168+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {
@@ -84,10 +88,12 @@
       "domain": "backend",
       "agent": "cc-review",
       "tmux": "cc-review",
-      "status": "blocked",
+      "status": "done",
       "review_level": "full",
       "note": "重点验证 flock race guard、heartbeat 有效性、SKILL.md 一致性",
-      "commits": [],
+      "commits": [
+        "7ea9d0063a8b227528013da7773a638426561846"
+      ],
       "issue": null,
       "depends_on": [
         "FIX-H1H2H3",
@@ -95,7 +101,7 @@
         "FIX-H5"
       ],
       "created_at": "2026-03-20T05:43:56Z",
-      "updated_at": "2026-03-20T05:43:56Z",
+      "updated_at": "2026-03-20T05:55:53.379484+00:00",
       "attempts": 0,
       "max_attempts": 3,
       "tokens": {

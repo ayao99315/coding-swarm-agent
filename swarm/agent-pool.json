@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-20T05:50:10.015357+00:00",
+  "updated_at": "2026-03-20T05:53:27.170484+00:00",
   "limits": {
     "max_codex": 4,
     "max_cc_frontend": 2,
@@ -32,10 +32,10 @@
       "type": "claude",
       "domain": "review",
       "tmux": "cc-review",
-      "status": "idle",
-      "current_task": null,
+      "status": "busy",
+      "current_task": "FIX-REVIEW",
       "spawned_at": null,
-      "last_seen": "2026-03-20T05:49:21.552474+00:00"
+      "last_seen": "2026-03-20T05:53:27.170484+00:00"
     },
     {
       "id": "codex-review",
@@ -46,6 +46,16 @@
       "current_task": null,
       "spawned_at": null,
       "last_seen": "2026-03-19T17:36:26.354660+00:00"
+    },
+    {
+      "id": "codex-2",
+      "type": "codex",
+      "domain": "backend",
+      "tmux": "codex-2",
+      "status": "idle",
+      "current_task": null,
+      "spawned_at": "2026-03-20T05:51:01Z",
+      "last_seen": "2026-03-20T05:51:01Z"
     }
   ]
 }
