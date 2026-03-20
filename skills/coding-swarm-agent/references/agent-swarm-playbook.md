@@ -312,6 +312,35 @@ pending → running → (按 review_level)
 blocked → pending（前置 done 后自动解锁）
 ```
 
+### 5.3 Plan 三层规范
+
+**三层分工：**
+
+| 层 | 产出 | 负责方 |
+|----|------|--------|
+| Requirements | 需求文档 `docs/requirements/` | 编排层（C 档复杂任务） |
+| Design | 设计文档 `docs/design/` | cc-plan（需代码探索时）；否则编排层直接写 |
+| Plan / 任务拆解 | 任务列表、swarm prompt `docs/swarm/` | 永远由编排层负责 |
+
+> cc-plan 定位收窄为"探索代码库 → 输出 docs/design/"，不负责需求整理和任务拆解。
+
+**三档判断：**
+
+```
+A 档：目标和路径清楚 → 不写文档，prompt 直接放 docs/swarm/
+B 档：目标清楚但方案需设计 → 写 docs/design/
+C 档：复杂模糊，需求不确定 → 先写 docs/requirements/，再写 docs/design/
+```
+
+**文档目录（两个 repo 统一结构）：**
+
+```
+docs/
+├── requirements/   ← C 档需求文档
+├── design/         ← 设计文档（B/C 档）
+└── swarm/          ← swarm prompt 和任务分析
+```
+
 ---
 
 ## 6. 任务拆解原则
@@ -1071,6 +1100,14 @@ git add -A && git commit -m "[预写好的 message]" && git push
 | macOS tmpfile 不唯一 | `mktemp "/tmp/...XXXXXX"` 在 macOS 下不替换 XXXXXX，临时文件冲突 | ✅ 改为 `mktemp "/tmp/agent-swarm-prompt-${TASK_ID}-${SESSION}.XXXXXX.txt"` 格式，macOS/Linux 均兼容 |
 | swarm 全部完成无汇总 | 每个任务单独通知，最后一批并发完成时没有全局汇报 | ✅ on-complete.sh 检测所有任务 done 时，发总汇报（项目/任务数/commit 数/token 汇总），用 sent 文件做幂等去重 |
 
+#### v2.6：Plan 三层规范 + 文档目录结构（2026-03-20）
+
+- 新增 Plan 三档规范（A/B/C），明确 Requirements/Design/Plan 三层分工
+- cc-plan 定位收窄为"探索代码库 → 输出 docs/design/"，不负责需求和任务拆解
+- 两个 repo 建立统一 docs/requirements/ docs/design/ docs/swarm/ 目录
+- 新增 references/prompt-requirements.md 需求文档模板
+- 新增 scripts/swarm-new-batch.sh 批次管理脚本
+
 ### 18.3 📈 未来改进方向
 
 1. **多项目支持** — swarm 配置按项目隔离，agent-pool.json 支持多 project context
@@ -1095,8 +1132,8 @@ git add -A && git commit -m "[预写好的 message]" && git push
 
 ---
 
-> **文档版本：** v2.5
+> **文档版本：** v2.6
 > **创建日期：** 2026-03-16
-> **更新日期：** 2026-03-19（v2.5: 去掉 webhook 改 system event 直接唤醒主 session + update-task-status.sh 同步 blocked→pending 解锁 + dispatch.sh --prompt-file tmpfile 修复 + on-complete.sh swarm 总汇报 + macOS tmpfile 兼容修复）
+> **更新日期：** 2026-03-20（v2.6: 新增 Plan 三层规范 5.3 节 + v2.6 实战教训条目）
 > **维护者：** 小明（OpenClaw Agent）
 > **状态：** ✅ 实战验证 + 复盘改进完成
