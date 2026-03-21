@@ -268,11 +268,15 @@ $SKILL_DIR/scripts/review-dashboard.sh
 For each ready task (status=pending, dependencies met):
 - Pick agent based on domain (backend→codex, frontend→cc-frontend)
 - Generate prompt from template (`references/prompt-codex.md` or `references/prompt-cc-frontend.md`)
+  The current prompt templates include `## 认知模式`, `## Completeness Principle`, and `## Contributor Mode（任务完成后填写）`. Keep those sections intact when adapting a task prompt.
   **Prompt quality rules:**
   - Reference actual code files (e.g. "参考 `src/persistence/db.ts` 的 getPool() 模式"), never describe tech stack in words
   - Pre-write the exact `git commit -m "..."` command, don't let agent choose
   - List specific file paths in scope, not directory names
   - In "Do NOT" section, list files likely to be accidentally modified
+  - Preserve the four cognitive checks in the prompt: `DRY Check`, `Boring by Default`, `Blast Radius Check`, `Two-Week Smell Test`
+  - State the `Completeness Principle` explicitly when scope includes paired docs/files, so the agent finishes every in-scope artifact before stopping
+  - Keep `## Contributor Mode（任务完成后填写）` at the end of the prompt and require the agent to include the field report in the commit message body: what was done, issues hit, and what was intentionally left out
 - Dispatch using the wrapper script (auto: marks running + attaches completion callback + force-commits if agent forgets):
   ```bash
   scripts/dispatch.sh <session> <task_id> --prompt-file /tmp/task-prompt.txt <agent> <arg1> <arg2> ...
@@ -289,6 +293,7 @@ For each ready task (status=pending, dependencies met):
   1. Updates active-tasks.json status to `running`
   2. Appends a force-commit check after agent finishes (catches forgotten commits)
   3. Calls on-complete.sh which updates status to `done`/`failed` + fires `openclaw system event` to wake orchestrator (AI)
+  4. Preserves the agent's Contributor Mode field report via the commit body, so the completion record explains what changed, what went wrong, and what was skipped
 
 **Parallel dispatch:** OK if file scopes don't overlap. Check before dispatching.
 
@@ -301,6 +306,8 @@ For each ready task (status=pending, dependencies met):
    a. `update-task-status.sh` — atomically updates active-tasks.json (status + commit + auto-unblock dependents)
    b. `openclaw system event --text "Done: $TASK_ID" --mode now` — wakes the main session orchestrator (AI)
    c. `openclaw message send` — Telegram notification to human.
+
+Current notification format is the upgraded "20 分钟前通知" style: task name, token usage (`Xk`), elapsed time, and a suggested next step. When the whole swarm completes, the final notification also includes total duration.
 
 The orchestrator (AI main session), once woken by the event, is responsible for:
 - Verifying commit scope (reading `git diff`)
@@ -560,7 +567,7 @@ tmux send-keys -t <session> Enter
 - `references/prompt-cc-review.md` — CC/Codex review prompt template
 - `references/task-schema.md` — active-tasks.json schema and status definitions
 - `scripts/dispatch.sh` — Dispatch wrapper: mark running + mark agent busy + tee output + force-commit + on-complete callback
-- `scripts/on-complete.sh` — Completion callback: parse tokens + update status + mark agent idle + agent-manager + webhook + milestone alert + notify
+- `scripts/on-complete.sh` — Completion callback: parse tokens + update status + mark agent idle + agent-manager + webhook + milestone alert + upgraded "20 分钟前通知" style notify
 - `scripts/update-task-status.sh` — Atomically update task status in active-tasks.json (status + tokens + auto-unblock)
 - `scripts/update-agent-status.sh` — Update a single agent's status in agent-pool.json (idle/busy/dead)
 - `scripts/parse-tokens.sh` — Parse token usage from agent output log (Claude Code + Codex formats)
@@ -568,7 +575,9 @@ tmux send-keys -t <session> Enter
 - `scripts/agent-manager.sh` — Evaluate task queue → scale agents up (spawn) or trigger cleanup when all done
 - `scripts/spawn-agent.sh` — Spawn a new tmux session + register in agent-pool.json (with memory check)
 - `scripts/check-memory.sh` — Check available RAM; ok/warn/block thresholds for safe agent spawning
-- `scripts/health-check.sh` — Inspect all running agent sessions; detect stuck/dead agents and notify
+- `scripts/review-dashboard.sh` — Pre-deploy readiness dashboard; review task detection is more precise and ordering is stable by time
+- `scripts/health-check.sh` — Inspect all running agent sessions; detect stuck/dead agents, notify, and run prompt-reference validation at the end
+- `scripts/validate-prompts.sh` — Scan prompt templates under `references/` and verify every referenced `scripts/*.sh` path exists
 - `scripts/cleanup-agents.sh` — Kill all dynamic agent sessions after swarm completes; preserve fixed sessions
 - `scripts/monitor.sh` — Fallback cron monitor (safety net, optional)
 - Full design doc: `~/.openclaw/workspace/docs/coding-swarm-agent-playbook.md`
