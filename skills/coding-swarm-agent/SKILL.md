@@ -253,7 +253,10 @@ $SKILL_DIR/scripts/dispatch.sh cc-frontend FIX-XXX --prompt-file /tmp/fix-xxx-pr
   claude --model claude-sonnet-4-6 --permission-mode bypassPermissions \
   --no-session-persistence --print --output-format json
 
-# DEPLOY-XXX 在 FIX-XXX on-complete 后自动解锁为 pending；orchestrator 被 event 唤醒后 dispatch
+# DEPLOY-XXX 在 FIX-XXX on-complete 后自动解锁为 pending
+# dispatch deploy 之前，先运行 review dashboard
+$SKILL_DIR/scripts/review-dashboard.sh
+# 确认输出"可以发版 ✅"后再 dispatch DEPLOY-XXX
 ```
 
 **规则：hotfix 和 deploy 永远成对注册，deploy 永远依赖 fix。**
@@ -273,6 +276,12 @@ For each ready task (status=pending, dependencies met):
 - Dispatch using the wrapper script (auto: marks running + attaches completion callback + force-commits if agent forgets):
   ```bash
   scripts/dispatch.sh <session> <task_id> --prompt-file /tmp/task-prompt.txt <agent> <arg1> <arg2> ...
+  ```
+  Before dispatching any `deploy` task:
+  ```bash
+  # dispatch deploy 之前，先运行 review dashboard
+  ~/.openclaw/workspace/skills/coding-swarm-agent/scripts/review-dashboard.sh
+  # 确认输出"可以发版 ✅"后再 dispatch
   ```
   Legacy single-string commands are still accepted for backward compatibility, but new docs should always use argv + `--prompt-file`.
   dispatch.sh automatically:
