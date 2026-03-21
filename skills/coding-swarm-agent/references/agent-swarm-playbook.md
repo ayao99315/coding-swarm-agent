@@ -160,6 +160,7 @@ post-commit hook 触发 → 写信号 + 唤醒编排层
 
 **Claude Code（贵，只用在需要深度推理的地方）：**
 - 规划 / 架构决策 / 需求分析 → `cc-plan`
+- **文档更新**（playbook、SKILL.md、README 等）→ `cc-plan`（opus，理解全局上下文）
 - 审查 Codex 写的后端代码 → `cc-review`
 - 对外产品的前端（高 UI 质量要求）→ `cc-frontend`
 
