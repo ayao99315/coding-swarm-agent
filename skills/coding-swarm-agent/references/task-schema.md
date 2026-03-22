@@ -30,8 +30,8 @@ Location: `~/.openclaw/workspace/swarm/active-tasks.json`
     {
       "id": "T001",
       "name": "Short task name",
-      "domain": "backend | frontend | test | deploy | docs",
-      "agent": "codex-1 | codex-2 | codex-frontend | cc-frontend | cc-plan | codex-test | codex-deploy | null",
+      "domain": "backend | frontend | docs | writing | analysis | design | test | deploy",
+      "agent": "codex-1 | cc-plan | cc-frontend | cc-review | codex-review | codex-test | codex-deploy | null",
       "tmux": "tmux session name | null",
       "milestone": "M1 | null",
       "status": "pending | blocked | running | reviewing | done | failed | escalated",
