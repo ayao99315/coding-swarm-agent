@@ -28,7 +28,7 @@ You (OpenClaw) = orchestrator
 4. **You decompose tasks, not the agent.** Each prompt has explicit scope + file boundaries.
 5. **Cross-review.** Codex output → cc-review. CC output → codex-review.
 6. **File-isolation parallelism.** Different agents may run concurrently only if their file scopes don't overlap.
-7. **⚠️ ALWAYS use dispatch.sh — never exec directly.** Any time you run Codex or Claude Code within a swarm project (active-tasks.json exists or task is swarm-related), dispatch via `dispatch.sh`. Never use the `exec` tool or `coding-agent` skill pattern directly. Reason: dispatch.sh is the only path that guarantees on-complete.sh fires → status updated → webhook triggered → you get notified. Direct exec = silent failure, no notification, no status tracking.
+7. **⚠️ ALWAYS use dispatch.sh — never exec directly.** Any time you run Codex or Claude Code within a swarm project (active-tasks.json exists or task is swarm-related), dispatch via `dispatch.sh`. Never use the `exec` tool or `coding-agent` skill pattern directly. Reason: dispatch.sh is the only path that guarantees on-complete.sh fires → status updated → `openclaw system event` fired → orchestrator (AI) wakes and responds. Direct exec = silent failure, no notification, no status tracking.
 8. **⚠️ ORCHESTRATOR NEVER TOUCHES PROJECT FILES — NO EXCEPTIONS.**
    You are a pure orchestrator and auditor. Your role: understand requirements, write prompts, dispatch to agents, review agent output, coordinate next steps, notify human. Nothing else.
    
@@ -159,7 +159,7 @@ This installs a `post-commit` hook that:
 ### ⚠️ 任务注册铁律（所有任务，无例外）
 
 **dispatch 前必须注册，没有例外，没有"太小可以跳过"。**
-dispatch.sh 收到 `WARN: task not found` = 任务在黑洞里 = 状态不追踪 = deploy 不自动触发 = 你永远不知道完没完。
+dispatch.sh 收到 `WARN: task not found` = 任务在黑洞里 = 状态不追踪 = orchestrator 不会被唤醒 dispatch deploy = 你永远不知道完没完。
 
 #### Hotfix 快速注册（1 行命令，比跳过更省力）
 
@@ -190,10 +190,10 @@ print(f"✅ Registered $TASK_ID")
 EOF
 ```
 
-#### Hotfix + Deploy 链式注册（fix 完自动触发 deploy）
+#### Hotfix + Deploy 链式注册（fix 完成后 orchestrator 自动 dispatch deploy）
 
 ```bash
-# 注册 FIX + 依赖它的 DEPLOY，形成自动链
+# 注册 FIX + 依赖它的 DEPLOY，形成事件驱动链
 python3 - << EOF
 import json, datetime
 with open('$TASK_FILE') as f:
@@ -253,7 +253,7 @@ $SKILL_DIR/scripts/dispatch.sh cc-frontend FIX-XXX --prompt-file /tmp/fix-xxx-pr
   claude --model claude-sonnet-4-6 --permission-mode bypassPermissions \
   --no-session-persistence --print --output-format json
 
-# DEPLOY-XXX 在 FIX-XXX on-complete 后自动解锁为 pending
+# DEPLOY-XXX 在 FIX-XXX 完成后自动解锁为 pending；orchestrator 被事件唤醒后 dispatch DEPLOY-XXX
 # dispatch deploy 之前，先运行 review dashboard
 $SKILL_DIR/scripts/review-dashboard.sh
 # 确认输出"可以发版 ✅"后再 dispatch DEPLOY-XXX
@@ -373,7 +373,7 @@ Each task has a `review_level` field (see `references/task-schema.md`):
 
 When a task is marked `done`:
 1. Scan all `blocked` tasks — if all `depends_on` are `done`, flip to `pending`
-2. Auto-dispatch the next `pending` task(s) using dispatch.sh
+2. Orchestrator (AI) dispatches the next `pending` task(s) using dispatch.sh
 3. If parallel-safe (no file overlap), dispatch multiple simultaneously
 
 When all tasks done → notify human via Telegram:
@@ -590,7 +590,7 @@ projects/
 - `scripts/swarm-config.sh` — Unified config reader/writer for `swarm/config.json`. Commands: `get <dot.path>`, `set <dot.path> <value>`, `resolve <dot.path>` (expands `${ENV_VAR}` templates), `project get <dot.path>`
 - `scripts/generate-image.sh` — Generic image generation interface. Backends: `nano-banana` (Gemini), `openai` (DALL-E 3), `stub` (testing). Configured via `swarm/config.json` `image_generation.*`
 - `scripts/dispatch.sh` — Dispatch wrapper: mark running + mark agent busy + tee output + force-commit + on-complete callback. Reads `notify.verbose_dispatch` via swarm-config.sh; auto-injects `projects/<slug>/context.md` for cc-plan tasks
-- `scripts/on-complete.sh` — Completion callback: parse tokens + update status + mark agent idle + agent-manager + webhook + milestone alert + upgraded "20 分钟前通知" style notify. Reads `notify.target` via `swarm-config.sh resolve` (fallback: legacy notify-target file). Includes first 300 chars of commit body as Field Report in Telegram notification. Auto-appends retro record to `projects/<slug>/retro.jsonl`
+- `scripts/on-complete.sh` — Completion callback: parse tokens + update status + mark agent idle + agent-manager + `openclaw system event` (wake orchestrator) + milestone alert + upgraded "20 分钟前通知" style notify. Reads `notify.target` via `swarm-config.sh resolve` (fallback: legacy notify-target file). Includes first 300 chars of commit body as Field Report in Telegram notification. Auto-appends retro record to `projects/<slug>/retro.jsonl`
 - `scripts/update-task-status.sh` — Atomically update task status in active-tasks.json (status + tokens + auto-unblock)
 - `scripts/update-agent-status.sh` — Update a single agent's status in agent-pool.json (idle/busy/dead)
 - `scripts/parse-tokens.sh` — Parse token usage from agent output log (Claude Code + Codex formats)
