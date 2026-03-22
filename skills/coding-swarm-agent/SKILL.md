@@ -1,9 +1,9 @@
 ---
-name: coding-swarm-agent
-description: "Orchestrate multi-agent coding workflows using tmux-driven Claude Code and Codex agents. Use when: (1) user requests a feature/fix that should be delegated to coding agents, (2) managing parallel coding tasks across front-end and back-end, (3) monitoring active agent sessions and coordinating review, (4) user says 'start task', 'assign to agents', 'swarm mode', or references the coding-swarm-agent playbook. NOT for: simple one-liner edits (just edit directly), reading code (use read tool), or single quick questions about code."
+name: ayao-workflow-agent
+description: "Multi-agent workflow orchestrator for coding, writing, analysis, and image tasks via tmux-driven Claude Code and Codex agents. Use when: (1) user requests a feature/fix that should be delegated to coding agents, (2) managing parallel coding tasks across front-end and back-end, (3) monitoring active agent sessions and coordinating review, (4) user says 'start task', 'assign to agents', 'swarm mode', or references the ayao-workflow-agent playbook. NOT for: simple one-liner edits (just edit directly), reading code (use read tool), or single quick questions about code."
 ---
 
-# Agent Swarm Orchestrator
+# ayao-workflow-agent
 
 Coordinate multiple coding agents (Claude Code + Codex) via tmux sessions on a single machine. You are the orchestrator — you decompose tasks, write prompts, dispatch to agents, monitor progress, coordinate cross-review, and report results.
 
@@ -126,7 +126,7 @@ When a new module or standalone feature is requested (e.g., backtest, new micros
 When beginning a new swarm project or a new phase of work, archive the current batch first:
 
 ```bash
-SKILL_DIR=~/.openclaw/workspace/skills/coding-swarm-agent
+SKILL_DIR=~/.openclaw/workspace/skills/ayao-workflow-agent
 $SKILL_DIR/scripts/swarm-new-batch.sh --project "<project-name>" --repo "<github-url>"
 ```
 
@@ -147,7 +147,7 @@ Write tasks to `~/.openclaw/workspace/swarm/active-tasks.json`. See `references/
 
 Install git hooks for event-driven automation:
 ```bash
-~/.openclaw/workspace/skills/coding-swarm-agent/scripts/install-hooks.sh /path/to/project
+~/.openclaw/workspace/skills/ayao-workflow-agent/scripts/install-hooks.sh /path/to/project
 ```
 
 This installs a `post-commit` hook that:
@@ -220,7 +220,7 @@ EOF
 当发现 bug 需要立刻修 → 立刻部署时，走这个流程：
 
 ```bash
-SKILL_DIR=~/.openclaw/workspace/skills/coding-swarm-agent
+SKILL_DIR=~/.openclaw/workspace/skills/ayao-workflow-agent
 TASK_FILE=~/.openclaw/workspace/swarm/active-tasks.json
 
 # Step 1: 注册 FIX + DEPLOY 任务（链式依赖）
@@ -291,7 +291,7 @@ For each ready task (status=pending, dependencies met):
   Before dispatching any `deploy` task:
   ```bash
   # dispatch deploy 之前，先运行 review dashboard
-  ~/.openclaw/workspace/skills/coding-swarm-agent/scripts/review-dashboard.sh
+  ~/.openclaw/workspace/skills/ayao-workflow-agent/scripts/review-dashboard.sh
   # 确认输出"可以发版 ✅"后再 dispatch
   ```
   如需检查历史批次或其它任务文件，可追加 `--task-file /path/to/tasks.json`。
@@ -449,7 +449,7 @@ Read via the config system: `swarm-config.sh resolve notify.verbose_dispatch` (f
 ### 切换开关
 
 ```bash
-SKILL_DIR=~/.openclaw/workspace/skills/coding-swarm-agent
+SKILL_DIR=~/.openclaw/workspace/skills/ayao-workflow-agent
 
 # 开启详细模式（默认）
 $SKILL_DIR/scripts/swarm-config.sh set notify.verbose_dispatch true
@@ -504,7 +504,7 @@ Model is fixed as `gpt-5.4`. Reasoning effort is configurable via `-c model_reas
 
 ### Send commands to agents (with auto-completion notification)
 ```bash
-SKILL_DIR=~/.openclaw/workspace/skills/coding-swarm-agent
+SKILL_DIR=~/.openclaw/workspace/skills/ayao-workflow-agent
 PROMPT_FILE=/tmp/swarm-task-prompt.txt
 
 cat > "$PROMPT_FILE" << 'PROMPT'
@@ -617,4 +617,4 @@ The following WARN-level issues were identified during the v1.6.0 security revie
 - `scripts/health-check.sh` — Inspect all running agent sessions; detect stuck/dead agents, mark their tasks as `failed` via update-task-status.sh, notify, and run prompt-reference validation. Uses flock + atomic write for agent-pool.json
 - `scripts/validate-prompts.sh` — Scan prompt templates under `references/` and verify every referenced `scripts/*.sh` path exists
 - `scripts/cleanup-agents.sh` — Kill all dynamic agent sessions after swarm completes; preserve fixed sessions. Uses flock + atomic write for agent-pool.json
-- Full design doc: `~/.openclaw/workspace/docs/coding-swarm-agent-playbook.md`
+- Full design doc: `~/.openclaw/workspace/docs/ayao-workflow-agent-playbook.md`
