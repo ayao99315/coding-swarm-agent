@@ -17,8 +17,10 @@
 set -euo pipefail
 
 POOL_FILE="$HOME/.openclaw/workspace/swarm/agent-pool.json"
+POOL_LOCK="${POOL_FILE}.lock"
 NOTIFY_TARGET=$(cat "$HOME/.openclaw/workspace/swarm/notify-target" 2>/dev/null || echo "")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+export PATH="/opt/homebrew/opt/util-linux/bin:$PATH"
 
 # Sessions to NEVER kill (fixed infrastructure)
 PRESERVE=("cc-plan" "cc-review" "codex-review")
@@ -58,18 +60,34 @@ done
 
 # Update agent-pool.json — remove closed sessions
 if [[ -f "$POOL_FILE" ]]; then
-  python3 -c "
+  (
+    flock -x 9
+    POOL_FILE="$POOL_FILE" \
+    NOW="$NOW" \
+    python3 - <<'PYEOF'
 import json
-from datetime import datetime, timezone
+import os
 
-pool = json.load(open('$POOL_FILE'))
+pool_file = os.environ['POOL_FILE']
+now = os.environ['NOW']
+
+with open(pool_file, 'r') as f:
+    pool = json.load(f)
+
 dynamic = ['codex-1','codex-2','codex-3','codex-4','cc-frontend-1','cc-frontend-2']
-pool['agents'] = [a for a in pool['agents'] if a['id'] not in dynamic]
-pool['updated_at'] = '$NOW'
-with open('$POOL_FILE', 'w') as f:
+pool['agents'] = [a for a in pool.get('agents', []) if a.get('id') not in dynamic]
+pool['updated_at'] = now
+
+tmp = pool_file + '.tmp'
+with open(tmp, 'w') as f:
     json.dump(pool, f, indent=2, ensure_ascii=False)
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, pool_file)
+
 print('agent-pool.json updated.')
-" 2>/dev/null || true
+PYEOF
+  ) 9>"$POOL_LOCK" 2>/dev/null || true
 fi
 
 # Summary

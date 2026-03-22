@@ -17,7 +17,9 @@ set -euo pipefail
 TYPE="${1:?Usage: spawn-agent.sh <codex|claude> <project_dir>}"
 PROJECT_DIR="${2:?}"
 POOL_FILE="$HOME/.openclaw/workspace/swarm/agent-pool.json"
+POOL_LOCK="${POOL_FILE}.lock"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export PATH="/opt/homebrew/opt/util-linux/bin:$PATH"
 
 # Load limits from pool file
 MAX_CODEX=$(python3 -c "import json; d=json.load(open('$POOL_FILE')); print(d['limits']['max_codex'])" 2>/dev/null || echo 4)
@@ -82,35 +84,52 @@ echo "✅ Created tmux session: $NEW_SESSION"
 # ── Register in agent-pool.json ───────────────────────────────────────────
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-python3 -c "
+(
+  flock -x 9
+  POOL_FILE="$POOL_FILE" \
+  NOW="$NOW" \
+  NEW_SESSION="$NEW_SESSION" \
+  AGENT_TYPE="$AGENT_TYPE" \
+  DOMAIN="$DOMAIN" \
+  python3 - <<'PYEOF'
 import json
-from datetime import datetime, timezone
+import os
 
-pool_file = '$POOL_FILE'
+pool_file = os.environ['POOL_FILE']
+now = os.environ['NOW']
+new_session = os.environ['NEW_SESSION']
+agent_type = os.environ['AGENT_TYPE']
+domain = os.environ['DOMAIN']
+
 with open(pool_file) as f:
     data = json.load(f)
 
 new_agent = {
-    'id': '$NEW_SESSION',
-    'type': '$AGENT_TYPE',
-    'domain': '$DOMAIN',
-    'tmux': '$NEW_SESSION',
+    'id': new_session,
+    'type': agent_type,
+    'domain': domain,
+    'tmux': new_session,
     'status': 'idle',
     'current_task': None,
-    'spawned_at': '$NOW',
-    'last_seen': '$NOW'
+    'spawned_at': now,
+    'last_seen': now
 }
 
 # Remove if already exists (shouldn't happen but be safe)
-data['agents'] = [a for a in data['agents'] if a['id'] != '$NEW_SESSION']
+data['agents'] = [a for a in data['agents'] if a.get('id') != new_session]
 data['agents'].append(new_agent)
-data['updated_at'] = '$NOW'
+data['updated_at'] = now
 
-with open(pool_file, 'w') as f:
+tmp = pool_file + '.tmp'
+with open(tmp, 'w') as f:
     json.dump(data, f, indent=2, ensure_ascii=False)
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, pool_file)
 
 print(f'Registered {new_agent[\"id\"]} in agent pool')
-"
+PYEOF
+) 9>"$POOL_LOCK"
 
 # Memory warning notification
 if [[ "$MEM_STATUS" == "warn" ]]; then

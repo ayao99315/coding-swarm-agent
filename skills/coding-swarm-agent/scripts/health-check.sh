@@ -14,9 +14,115 @@ set -euo pipefail
 STUCK_MINUTES=15
 TASKS_FILE="$HOME/.openclaw/workspace/swarm/active-tasks.json"
 POOL_FILE="$HOME/.openclaw/workspace/swarm/agent-pool.json"
+POOL_LOCK="${POOL_FILE}.lock"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 NOTIFY_TARGET=$(cat "$HOME/.openclaw/workspace/swarm/notify-target" 2>/dev/null || echo "")
 NOW_TS=$(date +%s)
+export PATH="/opt/homebrew/opt/util-linux/bin:$PATH"
+
+mark_pool_session_dead() {
+  local target_session="$1"
+  (
+    flock -x 9
+    POOL_FILE="$POOL_FILE" TARGET_SESSION="$target_session" python3 - <<'PYEOF'
+import json
+import os
+from datetime import datetime, timezone
+
+pool_file = os.environ['POOL_FILE']
+target_session = os.environ['TARGET_SESSION']
+
+with open(pool_file, 'r') as f:
+    pool = json.load(f)
+
+now = datetime.now(timezone.utc).isoformat()
+for agent in pool.get('agents', []):
+    if agent.get('tmux') == target_session:
+        agent['status'] = 'dead'
+        agent['last_seen'] = now
+
+pool['updated_at'] = now
+tmp = pool_file + '.tmp'
+with open(tmp, 'w') as f:
+    json.dump(pool, f, indent=2, ensure_ascii=False)
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, pool_file)
+PYEOF
+  ) 9>"$POOL_LOCK" 2>/dev/null || true
+}
+
+sync_pool_live_statuses() {
+  (
+    flock -x 9
+    POOL_FILE="$POOL_FILE" python3 - <<'PYEOF'
+import json
+import os
+import subprocess
+from datetime import datetime, timezone
+
+pool_file = os.environ['POOL_FILE']
+if not os.path.exists(pool_file):
+    raise SystemExit(0)
+
+with open(pool_file, 'r') as f:
+    pool = json.load(f)
+
+now = datetime.now(timezone.utc).isoformat()
+for agent in pool.get('agents', []):
+    tmux_session = agent.get('tmux')
+    if not tmux_session:
+        continue
+    result = subprocess.run(['tmux', 'has-session', '-t', tmux_session], capture_output=True)
+    if result.returncode == 0:
+        agent['last_seen'] = now
+        if agent.get('status') == 'dead':
+            agent['status'] = 'idle'
+    elif agent.get('status') != 'dead':
+        agent['status'] = 'dead'
+
+pool['updated_at'] = now
+tmp = pool_file + '.tmp'
+with open(tmp, 'w') as f:
+    json.dump(pool, f, indent=2, ensure_ascii=False)
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, pool_file)
+print('Pool updated.')
+PYEOF
+  ) 9>"$POOL_LOCK" 2>/dev/null || true
+}
+
+mark_running_tasks_failed_for_session() {
+  local dead_session="$1"
+  local reason="$2"
+  local stuck_tasks=""
+
+  stuck_tasks=$(DEAD_SESSION="$dead_session" TASKS_FILE="$TASKS_FILE" python3 - <<'PYEOF'
+import json
+import os
+
+tasks_file = os.environ['TASKS_FILE']
+dead_session = os.environ['DEAD_SESSION']
+
+try:
+    with open(tasks_file, 'r') as f:
+        data = json.load(f)
+except Exception:
+    raise SystemExit(0)
+
+for task in data.get('tasks', []):
+    if task.get('status') == 'running' and task.get('tmux') == dead_session:
+        print(task.get('id', ''))
+PYEOF
+)
+
+  for task_id in $stuck_tasks; do
+    [[ -z "$task_id" ]] && continue
+    echo "⚠️  Marking stuck task $task_id as failed (${reason}: $dead_session)" >&2
+    "$SCRIPT_DIR/update-task-status.sh" "$task_id" "failed" "" "" "$dead_session" || true
+  done
+}
 
 run_prompt_validation() {
   if [[ -x "$SCRIPT_DIR/validate-prompts.sh" ]]; then
@@ -62,19 +168,8 @@ for t in tasks:
   if ! tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
     echo "💀 $TASK_ID: tmux session '$TMUX_SESSION' is DEAD (task still marked running)"
     ISSUES_FOUND=true
-    # Update pool
-    python3 -c "
-import json
-from datetime import datetime, timezone
-pool = json.load(open('$POOL_FILE'))
-now = datetime.now(timezone.utc).isoformat()
-for a in pool['agents']:
-    if a['tmux'] == '$TMUX_SESSION':
-        a['status'] = 'dead'
-        a['last_seen'] = now
-with open('$POOL_FILE', 'w') as f:
-    json.dump(pool, f, indent=2, ensure_ascii=False)
-" 2>/dev/null || true
+    mark_pool_session_dead "$TMUX_SESSION"
+    mark_running_tasks_failed_for_session "$TMUX_SESSION" "tmux session dead"
 
     if [[ -n "$NOTIFY_TARGET" ]]; then
       openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
@@ -92,6 +187,7 @@ with open('$POOL_FILE', 'w') as f:
     echo "⚠️ $TASK_ID ($TMUX_SESSION): agent may have exited (shell prompt visible)"
     echo "   Last output: $PANE_OUTPUT"
     ISSUES_FOUND=true
+    mark_running_tasks_failed_for_session "$TMUX_SESSION" "shell prompt visible"
     if [[ -n "$NOTIFY_TARGET" ]]; then
       openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
         -m "⚠️ $TASK_ID ($TMUX_SESSION): agent 可能已退出但未触发 on-complete。请检查 tmux。" --silent 2>/dev/null &
@@ -120,6 +216,7 @@ except:
       echo "⏱️ $TASK_ID ($TMUX_SESSION): no status update for ${ELAPSED_MIN}min (threshold: ${STUCK_MINUTES}min)"
       echo "   Last output: $PANE_OUTPUT"
       ISSUES_FOUND=true
+      mark_running_tasks_failed_for_session "$TMUX_SESSION" "no status update for ${ELAPSED_MIN}min"
       if [[ -n "$NOTIFY_TARGET" ]]; then
         openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
           -m "⏱️ $TASK_ID ($TMUX_SESSION): 已 ${ELAPSED_MIN} 分钟无进展，可能卡住了。最近输出：$PANE_OUTPUT" --silent 2>/dev/null &
@@ -132,32 +229,7 @@ except:
 done
 
 # Update last_seen for all live sessions in pool
-python3 -c "
-import json, subprocess
-from datetime import datetime, timezone
-
-pool_file = '$POOL_FILE'
-if not __import__('os').path.exists(pool_file):
-    exit()
-
-pool = json.load(open(pool_file))
-now = datetime.now(timezone.utc).isoformat()
-
-for a in pool['agents']:
-    result = subprocess.run(['tmux', 'has-session', '-t', a['tmux']], capture_output=True)
-    if result.returncode == 0:
-        a['last_seen'] = now
-        if a['status'] == 'dead':
-            a['status'] = 'idle'  # session was recreated
-    else:
-        if a['status'] != 'dead':
-            a['status'] = 'dead'
-
-pool['updated_at'] = now
-with open(pool_file, 'w') as f:
-    json.dump(pool, f, indent=2, ensure_ascii=False)
-print('Pool updated.')
-" 2>/dev/null || true
+sync_pool_live_statuses
 
 echo "🔍 Health check complete."
 exit 0

@@ -11,31 +11,52 @@ NEW_STATUS="${2:?}"
 CURRENT_TASK="${3:-}"
 
 POOL_FILE="$HOME/.openclaw/workspace/swarm/agent-pool.json"
+POOL_LOCK="${POOL_FILE}.lock"
+export PATH="/opt/homebrew/opt/util-linux/bin:$PATH"
 [[ ! -f "$POOL_FILE" ]] && exit 0
 
-python3 -c "
+(
+  flock -x 9
+  SESSION_ID="$SESSION_ID" \
+  NEW_STATUS="$NEW_STATUS" \
+  CURRENT_TASK="$CURRENT_TASK" \
+  POOL_FILE="$POOL_FILE" \
+  python3 - <<'PYEOF'
 import json
+import os
 from datetime import datetime, timezone
 
-pool = json.load(open('$POOL_FILE'))
+pool_file = os.environ['POOL_FILE']
+session_id = os.environ['SESSION_ID']
+new_status = os.environ['NEW_STATUS']
+current_task = os.environ.get('CURRENT_TASK', '')
 now = datetime.now(timezone.utc).isoformat()
-found = False
 
-for a in pool['agents']:
-    if a['id'] == '$SESSION_ID' or a['tmux'] == '$SESSION_ID':
-        a['status'] = '$NEW_STATUS'
+with open(pool_file, 'r') as f:
+    pool = json.load(f)
+
+found = False
+for a in pool.get('agents', []):
+    if a.get('id') == session_id or a.get('tmux') == session_id:
+        a['status'] = new_status
         a['last_seen'] = now
-        a['current_task'] = '$CURRENT_TASK' if '$CURRENT_TASK' else None
+        a['current_task'] = current_task if current_task else None
         found = True
         break
 
 if not found:
-    # Agent not in pool yet (e.g. pre-existing fixed session) — add it
+    # Agent not in pool yet (e.g. pre-existing fixed session).
     pass
 
 pool['updated_at'] = now
-with open('$POOL_FILE', 'w') as f:
+
+tmp = pool_file + '.tmp'
+with open(tmp, 'w') as f:
     json.dump(pool, f, indent=2, ensure_ascii=False)
-" 2>/dev/null || true
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, pool_file)
+PYEOF
+) 9>"$POOL_LOCK" 2>/dev/null || true
 
 exit 0
