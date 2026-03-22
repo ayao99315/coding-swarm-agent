@@ -119,4 +119,15 @@ git add -A && git commit -m "docs(<scope>): <title>" && git push
 - [any issues encountered, or "无"]
 ### 没做的事（或者留给下个人的）
 - [things explicitly skipped, or "无"]
+
+**请将上述内容完整写入 commit message body**（第一行是 conventional commit 标题，空一行，然后是 field report）。格式示例：
+
+    ```
+    feat(scope): one-line description
+
+    Contributor Mode:
+    - 做了什么：...
+    - 遇到问题：...（如无请写"无"）
+    - 有意跳过：...（如无请写"无"）
+    ```
 ```

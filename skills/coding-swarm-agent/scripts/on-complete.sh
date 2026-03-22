@@ -19,6 +19,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TS=$(date +%s)
 COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
 COMMIT_MSG=$(git log -1 --pretty=%s 2>/dev/null || echo "")
+CONTRIBUTOR_REPORT=""
+if command -v git &>/dev/null && git rev-parse --git-dir &>/dev/null 2>&1; then
+  CONTRIBUTOR_REPORT=$(git log -1 --format="%b" 2>/dev/null | head -8 || echo "")
+fi
 
 # Parse token usage from agent output log (zero extra API calls — pure shell parsing)
 TOKENS_JSON='{"input":0,"output":0,"cache_read":0,"cache_write":0}'
@@ -454,6 +458,13 @@ PYEOF
 
   if [[ -z "$TASK_NOTIFY_MSG" ]]; then
     TASK_NOTIFY_MSG="${STATUS_EMOJI} ${TASK_ID} ${STATUS_WORD}"
+  fi
+
+  if [[ -n "$CONTRIBUTOR_REPORT" ]]; then
+    TASK_NOTIFY_MSG="${TASK_NOTIFY_MSG}
+
+📝 Field Report:
+${CONTRIBUTOR_REPORT:0:300}"
   fi
 
   openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
