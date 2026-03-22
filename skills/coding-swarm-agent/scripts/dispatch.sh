@@ -28,10 +28,14 @@ shift 2
 #   dispatch.sh <session> <task_id> --prompt-file /tmp/prompt.txt codex exec ...
 PROMPT_FILE=""
 PROMPT_TMP_FILE=""
+INJECTED_PROMPT_FILE=""
 DISPATCHED=false
 cleanup_prompt_tmp() {
   if [[ "$DISPATCHED" != "true" ]] && [[ -n "${PROMPT_TMP_FILE:-}" ]] && [[ -f "$PROMPT_TMP_FILE" ]]; then
     rm -f "$PROMPT_TMP_FILE"
+  fi
+  if [[ "$DISPATCHED" != "true" ]] && [[ -n "${INJECTED_PROMPT_FILE:-}" ]] && [[ -f "$INJECTED_PROMPT_FILE" ]]; then
+    rm -f "$INJECTED_PROMPT_FILE"
   fi
 }
 trap cleanup_prompt_tmp EXIT
@@ -53,6 +57,9 @@ os.close(fd)
 print(path)
 ' "$prefix" "${tmp_base%/}"
 }
+
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPT_DIR="$SKILL_DIR/scripts"
 
 COMMAND_ARGS=()
 if [[ "$#" == "1" ]]; then
@@ -83,16 +90,52 @@ if [[ "${#COMMAND_ARGS[@]}" == "0" ]]; then
   exit 1
 fi
 
+# Inject optional project context ahead of the planner prompt.
+if [[ "$SESSION" == "cc-plan" ]] && [[ -n "$PROMPT_FILE" ]]; then
+  _PROMPT_CMD_BIN="$(basename "${COMMAND_ARGS[0]}" 2>/dev/null || true)"
+  if [[ "$_PROMPT_CMD_BIN" == "claude" ]]; then
+    PROJECT_SLUG=$(python3 -c "
+import json, os
+try:
+    tasks_file = os.path.expanduser('~/.openclaw/workspace/swarm/active-tasks.json')
+    with open(tasks_file) as f:
+        data = json.load(f)
+    repo = data.get('repo', '')
+    slug = data.get('project') or (os.path.basename(repo.rstrip('/')) if repo else '')
+    print(slug)
+except Exception:
+    pass
+" 2>/dev/null || echo "")
+
+    CONTEXT_FILE="$SKILL_DIR/projects/$PROJECT_SLUG/context.md"
+    if [[ -n "$PROJECT_SLUG" ]] && [[ -f "$CONTEXT_FILE" ]]; then
+      INJECTED_PROMPT_FILE="$(make_temp_file "cc-plan-injected-${TASK_ID}")"
+      {
+        echo "## 项目背景（自动注入）"
+        echo ""
+        cat "$CONTEXT_FILE"
+        echo ""
+        echo "---"
+        echo ""
+        cat "$PROMPT_FILE"
+      } > "$INJECTED_PROMPT_FILE"
+      PROMPT_FILE="$INJECTED_PROMPT_FILE"
+    fi
+  fi
+fi
+
 COMMAND_LITERAL="$(printf ' %q' "${COMMAND_ARGS[@]}")"
 COMMAND_LITERAL="${COMMAND_LITERAL# }"
 
 if [[ -n "$PROMPT_FILE" ]]; then
   PROMPT_TMP_FILE="$(make_temp_file "agent-swarm-prompt-${TASK_ID}-${SESSION}")"
   cat "$PROMPT_FILE" > "$PROMPT_TMP_FILE"
+  if [[ -n "$INJECTED_PROMPT_FILE" ]] && [[ -f "$INJECTED_PROMPT_FILE" ]]; then
+    rm -f "$INJECTED_PROMPT_FILE"
+    INJECTED_PROMPT_FILE=""
+  fi
 fi
 
-SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SCRIPT_DIR="$SKILL_DIR/scripts"
 ON_COMPLETE="$SCRIPT_DIR/on-complete.sh"
 UPDATE_STATUS="$SCRIPT_DIR/update-task-status.sh"
 VERBOSE_DISPATCH=$("$SCRIPT_DIR/swarm-config.sh" get notify.verbose_dispatch 2>/dev/null || echo "")

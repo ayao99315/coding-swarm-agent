@@ -16,6 +16,7 @@ SIGNAL_FILE="/tmp/agent-swarm-signals.jsonl"
 SWARM_DIR="$HOME/.openclaw/workspace/swarm"
 TASKS_FILE="$SWARM_DIR/active-tasks.json"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TS=$(date +%s)
 COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
 COMMIT_MSG=$(git log -1 --pretty=%s 2>/dev/null || echo "")
@@ -103,6 +104,94 @@ PYEOF
 fi
 
 openclaw system event --text "Done: $TASK_ID $TASK_NAME" --mode now 2>/dev/null || true
+
+# Best-effort project retro write. Failures must never block the main flow.
+if [[ "$EXIT_CODE" == "0" ]]; then
+  PROJECT_SLUG=""
+  if [[ -f "$TASKS_FILE" ]]; then
+    PROJECT_SLUG=$(python3 -c "
+import json, os
+try:
+    with open('$TASKS_FILE') as f:
+        data = json.load(f)
+    repo = data.get('repo', '')
+    slug = data.get('project') or (os.path.basename(repo.rstrip('/')) if repo else '')
+    print(slug)
+except Exception:
+    pass
+" 2>/dev/null || echo "")
+  fi
+
+  if [[ -n "$PROJECT_SLUG" ]]; then
+    RETRO_DIR="$SKILL_DIR/projects/$PROJECT_SLUG"
+    RETRO_FILE="$RETRO_DIR/retro.jsonl"
+    CONTRIBUTOR_BODY=$(printf '%s' "$CONTRIBUTOR_REPORT" | head -5 | tr '\n' ' ' | cut -c1-200 2>/dev/null || echo "")
+    DURATION_SEC=$(python3 - "$TASKS_FILE" "$TASK_ID" <<'PYEOF' 2>/dev/null || echo ""
+import json
+import sys
+from datetime import datetime
+
+tasks_file, task_id = sys.argv[1], sys.argv[2]
+
+def parse_time(value):
+    if not value:
+        return None
+    try:
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+try:
+    with open(tasks_file) as f:
+        data = json.load(f)
+except Exception:
+    raise SystemExit(0)
+
+for task in data.get("tasks", []):
+    if task.get("id") != task_id:
+        continue
+    created_at = parse_time(task.get("created_at"))
+    updated_at = parse_time(task.get("updated_at"))
+    if created_at and updated_at:
+        seconds = int(round((updated_at - created_at).total_seconds()))
+        if seconds >= 0:
+            print(seconds)
+    raise SystemExit(0)
+PYEOF
+)
+
+    {
+      mkdir -p "$RETRO_DIR" 2>/dev/null || true
+      python3 - "$RETRO_FILE" "$TASK_ID" "$TASK_NAME" "$COMMIT_HASH" "$DURATION_SEC" "$CONTRIBUTOR_BODY" <<'PYEOF'
+import datetime
+import json
+import sys
+
+retro_file, task_id, task_name, commit_hash, duration_sec, contributor_body = sys.argv[1:7]
+
+entry = {
+    "ts": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "task_id": task_id,
+    "task_name": task_name,
+    "commit": commit_hash,
+    "result": "done",
+    "contributor_report": contributor_body,
+}
+
+if duration_sec.strip():
+    try:
+        entry["duration_sec"] = int(duration_sec)
+    except Exception:
+        pass
+
+with open(retro_file, "a", encoding="utf-8") as f:
+    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+PYEOF
+    } >/dev/null 2>&1 || true
+  fi
+fi
 
 # ── Token milestone check ──────────────────────────────────────────────────
 # Read active-tasks.json and compute cumulative swarm tokens.
