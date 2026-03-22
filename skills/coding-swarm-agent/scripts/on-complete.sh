@@ -71,7 +71,7 @@ fi
 "$SCRIPT_DIR/agent-manager.sh" 2>/dev/null &
 
 # Read config
-NOTIFY_TARGET=$(cat "$SWARM_DIR/notify-target" 2>/dev/null || echo "")
+NOTIFY_TARGET=$("$SCRIPT_DIR/swarm-config.sh" resolve notify.target 2>/dev/null || cat "$SWARM_DIR/notify-target" 2>/dev/null || echo "")
 
 TASK_NAME="$TASK_ID"
 if [[ -f "$TASKS_FILE" ]]; then

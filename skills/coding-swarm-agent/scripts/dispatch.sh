@@ -95,6 +95,7 @@ SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT_DIR="$SKILL_DIR/scripts"
 ON_COMPLETE="$SCRIPT_DIR/on-complete.sh"
 UPDATE_STATUS="$SCRIPT_DIR/update-task-status.sh"
+VERBOSE_DISPATCH=$("$SCRIPT_DIR/swarm-config.sh" get notify.verbose_dispatch 2>/dev/null || echo "")
 
 # Log file — human-readable agent output captured by tee
 LOG_FILE="/tmp/agent-swarm-${TASK_ID}-${SESSION}.log"
@@ -297,4 +298,8 @@ HEARTBEAT_PID=$!
 echo "$HEARTBEAT_PID" > "$HEARTBEAT_PID_FILE"
 disown "$HEARTBEAT_PID"
 
-echo "✅ Dispatched $TASK_ID to $SESSION (script: $SCRIPT_FILE, log: $LOG_FILE)"
+if [[ "$VERBOSE_DISPATCH" == "false" ]]; then
+  echo "🚀 $TASK_ID → $SESSION | $(date +%H:%M)"
+else
+  echo "✅ Dispatched $TASK_ID to $SESSION (script: $SCRIPT_FILE, log: $LOG_FILE)"
+fi
