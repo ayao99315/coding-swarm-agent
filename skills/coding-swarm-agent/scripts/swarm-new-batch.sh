@@ -8,12 +8,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  swarm-new-batch.sh --project <name> [--repo <github-url>] [--dir <swarm-dir>]
+  swarm-new-batch.sh --project <name> [--repo <github-url>] [--dir <swarm-dir>] [--force]
 
 Options:
   --project   Required. Project name written to batch_id and active-tasks.json
   --repo      Optional. Repository URL stored in active-tasks.json
   --dir       Optional. Swarm directory (default: ~/.openclaw/workspace/swarm)
+  --force     Proceed even if running tasks still exist in active-tasks.json
   --help      Show this help
 EOF
 }
@@ -21,6 +22,7 @@ EOF
 PROJECT=""
 REPO=""
 SWARM_DIR="${HOME}/.openclaw/workspace/swarm"
+FORCE="false"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -50,6 +52,10 @@ while [[ $# -gt 0 ]]; do
       }
       SWARM_DIR="$2"
       shift 2
+      ;;
+    --force)
+      FORCE="true"
+      shift
       ;;
     --help|-h)
       usage
@@ -115,6 +121,38 @@ PY
 
 ARCHIVE_PATH="$(resolve_archive_target)"
 BATCH_ID="$(basename "$ARCHIVE_PATH" .json)"
+
+RUNNING_COUNT="$(
+  python3 - "$ACTIVE_TASKS_FILE" <<'PY'
+import json
+import sys
+
+tasks_file = sys.argv[1]
+
+try:
+    with open(tasks_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    print(0)
+    sys.exit(0)
+
+running = [
+    task for task in data.get("tasks", [])
+    if task.get("status") == "running"
+]
+print(len(running))
+PY
+)"
+
+if [[ "$RUNNING_COUNT" -gt 0 ]]; then
+  echo "❌ Cannot start new batch: $RUNNING_COUNT task(s) still running." >&2
+  echo "   Wait for them to complete, or manually mark them failed first." >&2
+  echo "   Use --force to override (data loss risk)." >&2
+  if [[ "$FORCE" != "true" ]]; then
+    exit 1
+  fi
+  echo "⚠️  --force specified, proceeding anyway" >&2
+fi
 
 if should_archive "$ACTIVE_TASKS_FILE"; then
   cp "$ACTIVE_TASKS_FILE" "$ARCHIVE_PATH"
