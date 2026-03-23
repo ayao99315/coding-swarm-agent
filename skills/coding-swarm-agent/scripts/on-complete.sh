@@ -35,7 +35,7 @@ log_on_complete_error() {
   } >> "$ERROR_LOG"
 }
 
-trap 'log_on_complete_error "line=${LINENO} command=${BASH_COMMAND@Q} ec=$?"' ERR
+trap 'log_on_complete_error "line=${LINENO} command=${BASH_COMMAND} ec=$?"' ERR
 
 COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
 COMMIT_MSG=$(git log -1 --pretty=%s 2>/dev/null || echo "")
