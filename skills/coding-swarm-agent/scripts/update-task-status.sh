@@ -86,6 +86,8 @@ for task in data.get("tasks", []):
         current_status = task.get("status", "")
 
         if new_status == "running":
+            if "started_at" not in task:
+                task["started_at"] = datetime.utcnow().isoformat() + "Z"
             if current_status == "running":
                 task["updated_at"] = now
                 if tmux_session:

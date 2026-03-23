@@ -279,11 +279,11 @@ except Exception:
 for task in data.get("tasks", []):
     if task.get("id") != task_id:
         continue
-    created_at = parse_time(task.get("created_at"))
+    started_at = parse_time(task.get("started_at"))
     updated_at = parse_time(task.get("updated_at"))
-    if created_at and updated_at:
-        seconds = int(round((updated_at - created_at).total_seconds()))
-        if seconds >= 0:
+    if started_at and updated_at:
+        seconds = int(round((updated_at - started_at).total_seconds()))
+        if 0 <= seconds < 6 * 3600:
             print(seconds)
     raise SystemExit(0)
 PYEOF
@@ -584,10 +584,10 @@ for task in batch_tasks:
         if commit and commit not in commits:
             commits.append(commit)
 
-created_times = [parse_time(t.get("created_at")) for t in batch_tasks]
-updated_times = [parse_time(t.get("updated_at")) for t in batch_tasks]
-created_times = [t for t in created_times if t is not None]
-updated_times = [t for t in updated_times if t is not None]
+start_times = [parse_time(t.get("started_at")) for t in batch_tasks]
+start_times = [t for t in start_times if t is not None]
+updated_times_all = [parse_time(t.get("updated_at")) for t in batch_tasks]
+updated_times_all = [t for t in updated_times_all if t is not None]
 
 lines = [
     f"🎉 Swarm 完成 — {project}",
@@ -601,17 +601,10 @@ if total_input or total_output or total_cache_r:
         token_line += f" (+{format_k(total_cache_r)} cache)"
     lines.append(token_line)
 
-duration_sec = None
-if len(updated_times) >= 2:
-    duration_sec = (max(updated_times) - min(updated_times)).total_seconds()
-elif len(updated_times) == 1 and len(created_times) == 1:
-    duration_sec = (updated_times[0] - created_times[0]).total_seconds()
-    if duration_sec > 6 * 3600:
-        duration_sec = None
-
-if duration_sec is not None:
-    duration_text = format_batch_duration(duration_sec)
-    if duration_text:
+if start_times and updated_times_all:
+    batch_duration_sec = (max(updated_times_all) - min(start_times)).total_seconds()
+    if 0 < batch_duration_sec < 24 * 3600:
+        duration_text = format_batch_duration(batch_duration_sec)
         lines.append(f"⏱️ 批次用时: {duration_text}")
 
 try:
@@ -627,14 +620,15 @@ try:
         if input_tokens > 0:
             detail_parts.append(f"{format_k(input_tokens + output_tokens)} tokens")
 
-        task_created_at = parse_time(task.get("created_at"))
-        task_updated_at = parse_time(task.get("updated_at"))
-        if task_created_at and task_updated_at:
-            task_duration_sec = (task_updated_at - task_created_at).total_seconds()
-            if 0 <= task_duration_sec < 6 * 3600:
-                task_duration_text = format_task_duration(task_duration_sec)
-                if task_duration_text:
-                    detail_parts.append(task_duration_text)
+        started_at = parse_time(task.get("started_at"))
+        updated_at_t = parse_time(task.get("updated_at"))
+        duration_text = ""
+        if started_at and updated_at_t:
+            delta = (updated_at_t - started_at).total_seconds()
+            if 0 < delta < 6 * 3600:
+                duration_text = format_task_duration(delta)
+        if duration_text:
+            detail_parts.append(duration_text)
 
         task_line = f"{task_id} {task_status_emoji(task.get('status'))} {task_name}"
         if detail_parts:
@@ -755,11 +749,13 @@ input_tokens = int(tokens.get("input", 0) or 0)
 output_tokens = int(tokens.get("output", 0) or 0)
 cache_read = int(tokens.get("cache_read", 0) or 0)
 
-created_at = parse_time(task.get("created_at"))
+started_at = parse_time(task.get("started_at"))
 updated_at = parse_time(task.get("updated_at"))
 duration_text = ""
-if created_at and updated_at:
-    duration_text = format_duration((updated_at - created_at).total_seconds())
+if started_at and updated_at:
+    delta = (updated_at - started_at).total_seconds()
+    if 0 < delta < 6 * 3600:
+        duration_text = format_duration(delta)
 
 if input_tokens or output_tokens or cache_read:
     token_line = f"📊 Tokens: {format_k(input_tokens)} in / {format_k(output_tokens)} out"
