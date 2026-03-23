@@ -31,18 +31,18 @@ You (OpenClaw) = orchestrator
 7. **⚠️ ALWAYS use dispatch.sh — never exec directly.** Any time you run Codex or Claude Code within a swarm project (active-tasks.json exists or task is swarm-related), dispatch via `dispatch.sh`. Never use the `exec` tool or `coding-agent` skill pattern directly. Reason: dispatch.sh is the only path that guarantees on-complete.sh fires → status updated → `openclaw system event` fired → orchestrator (AI) wakes and responds. Direct exec = silent failure, no notification, no status tracking.
 8. **⚠️ ORCHESTRATOR NEVER TOUCHES PROJECT FILES — NO EXCEPTIONS.**
    You are a pure orchestrator and auditor. Your role: understand requirements, write prompts, dispatch to agents, review agent output, coordinate next steps, notify human. Nothing else.
-   
+
    NEVER use edit / write / exec tools to modify anything inside the project directory. This includes:
    - Source code (.ts, .tsx, .js, .py, etc.)
    - Config files (next.config.ts, package.json, tsconfig.json, .env*, nginx.conf, plist files)
    - Scripts, docs, or any other file inside the project repo
-   
+
    The ONLY files you may write directly:
    - `~/.openclaw/workspace/swarm/*` (task registry, agent pool, config)
    - `~/.openclaw/workspace/docs/*` (playbook, design docs outside the project repo)
    - `~/.openclaw/workspace/skills/*` (skill definitions)
    - `~/.openclaw/workspace/memory/*` (your own memory files)
-   
+
    **Task size is NOT a criterion.** Even a 1-line fix goes through cc-plan + codex. The question is always: "Does this touch the project directory?" → YES → dispatch to agent. Always.
 
 ## Role Definition
@@ -79,45 +79,45 @@ When a new module or standalone feature is requested (e.g., backtest, new micros
              → never touch the new directory yourself
 ```
 
-## Documentation Rules — Plan 三层规范
+## Documentation Rules — Three-Layer Planning
 
-### 三层分工
+### Three-Layer Responsibilities
 
-- **Requirements**: 永远由编排层整理和落地，用于明确需求边界、目标、非目标和验收标准
-- **Design**: 需要代码探索时由 `cc-plan` 产出；不需要代码探索时由编排层直接写
-- **Plan / 任务拆解**: 永远由编排层负责，因为编排层最了解 swarm 粒度、文件边界和 agent 分配
+- **Requirements**: Always organized and finalized by the orchestrator layer, used to define requirement boundaries, goals, non-goals, and acceptance criteria
+- **Design**: Produced by `cc-plan` when code exploration is needed; written directly by the orchestrator layer when no code exploration is required
+- **Plan / Task decomposition**: Always owned by the orchestrator layer, because the orchestrator best understands swarm granularity, file boundaries, and agent assignments
 
-### 三档任务判断
+### Three-Tier Task Classification
 
-| 档位 | 判断标准 | 需求文档 | 设计文档 | 负责方 |
+| Tier | Criteria | Requirements doc | Design doc | Owner |
 | --- | --- | --- | --- | --- |
-| A | 一句话任务，目标和实现路径都清楚 | 不写 | 不写；prompt / 分析文件放 `docs/swarm/` | 编排层 |
-| B | 目标清楚，但实现方案仍需设计 | 不写 | 写到 `docs/design/` | 设计由 `cc-plan` 或编排层负责；任务拆解始终由编排层负责 |
-| C | 复杂或模糊，需求本身仍不确定 | 先写到 `docs/requirements/` | 再写到 `docs/design/` | Requirements 和 Plan 由编排层负责；Design 由 `cc-plan` 或编排层负责 |
+| A | One-liner task — goal and implementation path are both clear | Not needed | Not needed; prompt / analysis files go in `docs/swarm/` | Orchestrator layer |
+| B | Goal is clear, but implementation approach still needs design | Not needed | Written to `docs/design/` | Design by `cc-plan` or orchestrator layer; task decomposition always by orchestrator layer |
+| C | Complex or ambiguous — requirements themselves are uncertain | Written to `docs/requirements/` first | Then written to `docs/design/` | Requirements and Plan by orchestrator layer; Design by `cc-plan` or orchestrator layer |
 
-### 文档目录结构
+### Document Directory Structure
 
 ```text
 <project-or-skill-root>/
   docs/
-    requirements/   ← 需求文档（编排层落，C 档复杂任务）
-    design/         ← 技术设计文档（cc-plan 出 或 编排层写）
-    swarm/          ← swarm dispatch prompt 文件、任务分析（编排层写，档位 A）
+    requirements/   ← Requirements docs (orchestrator writes, Tier C complex tasks)
+    design/         ← Technical design docs (cc-plan produces or orchestrator writes)
+    swarm/          ← Swarm dispatch prompt files, task analysis (orchestrator writes, Tier A)
 ```
 
-### 执行规则
+### Execution Rules
 
-- Requirements、Design、Plan 是三层，不要混写，也不要把任务拆解塞给 `cc-plan`
-- 档位 A 不写 requirements/design 文档，直接把 prompt 和任务分析落到 `docs/swarm/`
-- 档位 B 先完成 design，再由编排层拆任务；如果设计需要探索代码，再调用 `cc-plan`
-- 档位 C 必须先收敛需求，先写 `docs/requirements/`，再进入 design 和任务拆解
-- 任何进入 swarm 的任务，最终任务拆解都由编排层完成，不能外包给设计代理
+- Requirements, Design, and Plan are three separate layers — do not mix them, and do not push task decomposition onto `cc-plan`
+- Tier A does not require requirements/design docs — put prompts and task analysis directly in `docs/swarm/`
+- Tier B: complete design first, then orchestrator layer decomposes tasks; if design requires code exploration, invoke `cc-plan`
+- Tier C: must converge requirements first — write `docs/requirements/`, then proceed to design and task decomposition
+- For any task entering the swarm, final task decomposition is always done by the orchestrator layer — never delegated to the design agent
 
-### cc-plan 职责定位
+### cc-plan Role Definition
 
-- `cc-plan` 的核心价值是探索代码库后输出 Design 文档
-- `cc-plan` 只负责 Design 层，不负责 Requirements，也不负责 Plan / 任务拆解
-- `cc-plan` 的产出必须写到 `docs/design/<feature>-design.md`
+- `cc-plan`'s core value is exploring the codebase and producing Design documents
+- `cc-plan` is only responsible for the Design layer — not Requirements, not Plan / task decomposition
+- `cc-plan`'s output must be written to `docs/design/<feature>-design.md`
 
 ## Workflow
 
@@ -156,19 +156,19 @@ This installs a `post-commit` hook that:
 - Writes a signal to `/tmp/agent-swarm-signals.jsonl`
 - Wakes the orchestrator via `openclaw system event --mode now`
 
-### ⚠️ 任务注册铁律（所有任务，无例外）
+### ⚠️ Task Registration Rule (No Exceptions)
 
-**dispatch 前必须注册，没有例外，没有"太小可以跳过"。**
-dispatch.sh 收到 `WARN: task not found` = 任务在黑洞里 = 状态不追踪 = orchestrator 不会被唤醒 dispatch deploy = 你永远不知道完没完。
+**Every task must be registered before dispatch — no exceptions, no "too small to skip".**
+If dispatch.sh returns `WARN: task not found`, the task is in a black hole — no status tracking, the orchestrator will never be woken to dispatch deploy — you'll never know if it finished.
 
-#### Hotfix 快速注册（1 行命令，比跳过更省力）
+#### Hotfix Quick Registration (one command — easier than skipping)
 
 ```bash
-# 注册一个 hotfix/deploy 任务，直接粘贴修改 ID 和描述即可
+# Register a hotfix/deploy task — just modify the ID and description
 TASK_FILE=~/.openclaw/workspace/swarm/active-tasks.json
-TASK_ID="FIX-001"   # 改这里
-TASK_DESC="修复 sports WS warmup 问题"  # 改这里
-AGENT="cc-frontend"  # 改这里: codex-1 / cc-frontend / codex-deploy
+TASK_ID="FIX-001"   # change this
+TASK_DESC="Fix sports WS warmup issue"  # change this
+AGENT="cc-frontend"  # change this: codex-1 / cc-frontend / codex-deploy
 
 python3 - << EOF
 import json, datetime
@@ -190,20 +190,20 @@ print(f"✅ Registered $TASK_ID")
 EOF
 ```
 
-#### Hotfix + Deploy 链式注册（fix 完成后 orchestrator 自动 dispatch deploy）
+#### Hotfix + Deploy Chained Registration (orchestrator auto-dispatches deploy after fix completes)
 
 ```bash
-# 注册 FIX + 依赖它的 DEPLOY，形成事件驱动链
+# Register FIX + dependent DEPLOY, forming an event-driven chain
 python3 - << EOF
 import json, datetime
 with open('$TASK_FILE') as f:
     data = json.load(f)
 now = datetime.datetime.utcnow().isoformat() + "Z"
 data['tasks'].extend([
-    {"id": "FIX-001", "name": "修复描述", "domain": "frontend",
+    {"id": "FIX-001", "name": "Fix description", "domain": "frontend",
      "status": "pending", "agent": "cc-frontend", "review_level": "skip",
      "depends_on": [], "created_at": now},
-    {"id": "DEPLOY-001", "name": "部署 web-admin", "domain": "deploy",
+    {"id": "DEPLOY-001", "name": "Deploy web-admin", "domain": "deploy",
      "status": "blocked", "agent": "codex-deploy", "review_level": "skip",
      "depends_on": ["FIX-001"], "created_at": now},
 ])
@@ -213,27 +213,27 @@ print("✅ Registered FIX-001 + DEPLOY-001 (chained)")
 EOF
 ```
 
-注册完 → dispatch FIX → FIX 完成后 on-complete.sh 自动解锁 DEPLOY 为 pending → orchestrator 被 event 唤醒后 dispatch。
+After registration → dispatch FIX → when FIX completes, on-complete.sh auto-unblocks DEPLOY to pending → orchestrator is woken by event and dispatches it.
 
-## Hotfix Flow（快速修复链路）
+## Hotfix Flow (Quick Fix Pipeline)
 
-当发现 bug 需要立刻修 → 立刻部署时，走这个流程：
+When a bug is found that needs an immediate fix → immediate deploy, follow this flow:
 
 ```bash
 SKILL_DIR=~/.openclaw/workspace/skills/ayao-workflow-agent
 TASK_FILE=~/.openclaw/workspace/swarm/active-tasks.json
 
-# Step 1: 注册 FIX + DEPLOY 任务（链式依赖）
+# Step 1: Register FIX + DEPLOY tasks (chained dependency)
 python3 - << EOF
 import json, datetime
 with open('$TASK_FILE') as f:
     data = json.load(f)
 now = datetime.datetime.utcnow().isoformat() + "Z"
 data['tasks'].extend([
-    {"id": "FIX-XXX", "name": "一句话描述", "domain": "frontend",
+    {"id": "FIX-XXX", "name": "One-line description", "domain": "frontend",
      "status": "pending", "agent": "cc-frontend", "review_level": "skip",
      "depends_on": [], "created_at": now},
-    {"id": "DEPLOY-XXX", "name": "部署", "domain": "deploy",
+    {"id": "DEPLOY-XXX", "name": "Deploy", "domain": "deploy",
      "status": "blocked", "agent": "codex-deploy", "review_level": "skip",
      "depends_on": ["FIX-XXX"], "created_at": now},
 ])
@@ -242,24 +242,24 @@ with open('$TASK_FILE', 'w') as f:
 print("✅ Registered FIX-XXX + DEPLOY-XXX")
 EOF
 
-# Step 2: 把 prompt 写到文件（避免 shell 转义地狱）
+# Step 2: Write prompt to file (avoids shell escaping hell)
 cat > /tmp/fix-xxx-prompt.txt << 'PROMPT'
-## 你的任务
+## Your Task
 ...
 PROMPT
 
-# Step 3: dispatch（用 --prompt-file，不用手动转义）
+# Step 3: Dispatch (use --prompt-file, no manual escaping needed)
 $SKILL_DIR/scripts/dispatch.sh cc-frontend FIX-XXX --prompt-file /tmp/fix-xxx-prompt.txt \
   claude --model claude-sonnet-4-6 --permission-mode bypassPermissions \
   --no-session-persistence --print --output-format json
 
-# DEPLOY-XXX 在 FIX-XXX 完成后自动解锁为 pending；orchestrator 被事件唤醒后 dispatch DEPLOY-XXX
-# dispatch deploy 之前，先运行 review dashboard
+# DEPLOY-XXX auto-unblocks to pending after FIX-XXX completes; orchestrator is woken by event and dispatches DEPLOY-XXX
+# Before dispatching deploy, run the review dashboard first
 $SKILL_DIR/scripts/review-dashboard.sh
-# 确认输出"可以发版 ✅"后再 dispatch DEPLOY-XXX
+# Confirm output shows "Ready to release ✅" before dispatching
 ```
 
-**规则：hotfix 和 deploy 永远成对注册，deploy 永远依赖 fix。**
+**Rule: hotfix and deploy are always registered as a pair — deploy always depends on fix.**
 
 ---
 
@@ -274,15 +274,15 @@ For each ready task (status=pending, dependencies met):
   - `domain=test` → `codex-test`
   - `domain=deploy` → `codex-deploy`
 - Generate prompt from template (`references/prompt-codex.md` or `references/prompt-cc-frontend.md`)
-  The current prompt templates include `## 认知模式`, `## Completeness Principle`, and `## Contributor Mode（任务完成后填写）`. Keep those sections intact when adapting a task prompt.
+  The current prompt templates include `## Cognitive Mode`, `## Completeness Principle`, and `## Contributor Mode (fill in after task completion)`. Keep those sections intact when adapting a task prompt.
   **Prompt quality rules:**
-  - Reference actual code files (e.g. "参考 `src/persistence/db.ts` 的 getPool() 模式"), never describe tech stack in words
+  - Reference actual code files (e.g. "refer to `src/persistence/db.ts` getPool() pattern"), never describe tech stack in words
   - Pre-write the exact `git commit -m "..."` command, don't let agent choose
   - List specific file paths in scope, not directory names
   - In "Do NOT" section, list files likely to be accidentally modified
   - Preserve the four cognitive checks in the prompt: `DRY Check`, `Boring by Default`, `Blast Radius Check`, `Two-Week Smell Test`
   - State the `Completeness Principle` explicitly when scope includes paired docs/files, so the agent finishes every in-scope artifact before stopping
-  - Keep `## Contributor Mode（任务完成后填写）` at the end of the prompt and require the agent to include the field report in the commit message body: what was done, issues hit, and what was intentionally left out
+  - Keep `## Contributor Mode (fill in after task completion)` at the end of the prompt and require the agent to include the field report in the commit message body: what was done, issues hit, and what was intentionally left out
 - For `cc-plan` tasks: if a project memory file exists at `projects/<slug>/context.md`, dispatch.sh automatically injects it into the prompt so the planning agent has project-specific background context.
 - Dispatch using the wrapper script (auto: marks running + attaches completion callback + force-commits if agent forgets):
   ```bash
@@ -290,11 +290,11 @@ For each ready task (status=pending, dependencies met):
   ```
   Before dispatching any `deploy` task:
   ```bash
-  # dispatch deploy 之前，先运行 review dashboard
+  # Before dispatching deploy, run the review dashboard first
   ~/.openclaw/workspace/skills/ayao-workflow-agent/scripts/review-dashboard.sh
-  # 确认输出"可以发版 ✅"后再 dispatch
+  # Confirm output shows "Ready to release ✅" before dispatching
   ```
-  如需检查历史批次或其它任务文件，可追加 `--task-file /path/to/tasks.json`。
+  To check historical batches or other task files, append `--task-file /path/to/tasks.json`.
   Legacy single-string commands are still accepted for backward compatibility, but new docs should always use argv + `--prompt-file`.
   dispatch.sh automatically:
   1. Validates TASK_ID against a whitelist regex (rejects injection payloads)
@@ -316,7 +316,7 @@ For each ready task (status=pending, dependencies met):
    b. `openclaw system event --text "Done: $TASK_ID" --mode now` — wakes the main session orchestrator (AI)
    c. `openclaw message send` — Telegram notification to human.
 
-Current notification format is the upgraded "20 分钟前通知" style: task name, token usage (`Xk`), elapsed time, and a suggested next step. When the whole swarm completes, the final notification also includes total duration.
+Current notification format uses the upgraded compact style: task name, token usage (`Xk`), elapsed time, and a suggested next step. When the whole swarm completes, the final notification also includes total duration.
 
 The orchestrator (AI main session), once woken by the event, is responsible for:
 - Verifying commit scope (reading `git diff`)
@@ -414,51 +414,51 @@ Read via the config system: `swarm-config.sh resolve notify.verbose_dispatch` (f
 
 **Verbose Card (verbose_dispatch = true):**
 ```
-🚀 已派发 [TASK_ID] → [SESSION]
-┣ 📋 Session:  [tmux session 名 / background session id]
-┣ ⏰ 启动时间: [HH:MM:SS]
-┣ 🤖 模型:    [模型全名] ([级别/reasoning effort])
-┗ 📝 任务:    [一句话任务描述]
+🚀 Dispatched [TASK_ID] → [SESSION]
+┣ 📋 Session:  [tmux session name / background session id]
+┣ ⏰ Started:  [HH:MM:SS]
+┣ 🤖 Model:   [full model name] ([tier/reasoning effort])
+┗ 📝 Task:    [one-line task description]
 ```
 
-示例：
+Example:
 ```
-🚀 已派发 T001 → codex-1
+🚀 Dispatched T001 → codex-1
 ┣ 📋 Session:  tmux: codex-1
-┣ ⏰ 启动时间: 10:35:42
-┣ 🤖 模型:    gpt-5.4 (reasoning: high)
-┗ 📝 任务:    修复 sports-ws ping heartbeat，使服务器正常推送比赛数据
+┣ ⏰ Started:  10:35:42
+┣ 🤖 Model:   gpt-5.4 (reasoning: high)
+┗ 📝 Task:    Fix sports-ws ping heartbeat so server properly pushes match data
 ```
 
 **Compact Card (verbose_dispatch = false):**
 ```
-🚀 [TASK_ID] → [SESSION] | [模型]/[级别] | [HH:MM]
+🚀 [TASK_ID] → [SESSION] | [model]/[tier] | [HH:MM]
 ```
 
-示例：
+Example:
 ```
 🚀 T001 → codex-1 | gpt-5.4/high | 10:35
 ```
 
-### 非 Swarm 场景（单 agent，coding-agent skill）
+### Non-Swarm Scenarios (single agent, coding-agent skill)
 
-即使不经过 dispatch.sh，凡是 spawn coding agent 的操作，也必须汇报同格式的 Dispatch Card。字段：
-- Session: exec sessionId（如 `calm-falcon`）
-- 模型: 对应 Claude Code 为 `claude-sonnet-4-6` 或 opus；Codex 为 `gpt-5.4`
+Even outside dispatch.sh, any operation that spawns a coding agent must report a Dispatch Card in the same format. Fields:
+- Session: exec sessionId (e.g. `calm-falcon`)
+- Model: for Claude Code use `claude-sonnet-4-6` or opus; for Codex use `gpt-5.4`
 
-### 切换开关
+### Toggle Switch
 
 ```bash
 SKILL_DIR=~/.openclaw/workspace/skills/ayao-workflow-agent
 
-# 开启详细模式（默认）
+# Enable verbose mode (default)
 $SKILL_DIR/scripts/swarm-config.sh set notify.verbose_dispatch true
 
-# 关闭（精简模式）
+# Disable (compact mode)
 $SKILL_DIR/scripts/swarm-config.sh set notify.verbose_dispatch false
 ```
 
-也可以直接告诉我「开启/关闭 dispatch 详情」，我来更新配置。
+You can also just tell me "enable/disable dispatch details" and I'll update the config.
 
 ---
 
@@ -475,7 +475,7 @@ tmux new-session -d -s codex-review -c /path/to/project
 
 ### Model Selection Rules
 
-#### Claude Code（`claude` CLI）
+#### Claude Code (`claude` CLI)
 
 | Agent | Model | Rationale |
 |---|---|---|
@@ -483,11 +483,11 @@ tmux new-session -d -s codex-review -c /path/to/project
 | `cc-review` | `claude-sonnet-4-6` | Code review |
 | `cc-frontend` | `claude-sonnet-4-6` | External-facing UI only (`ui_quality=external`) |
 
-> **文档任务路由规则**：`domain: docs` 的任务（更新 playbook、SKILL.md、README 等文档）统一派发给 `cc-plan`（claude-opus-4-6），使用与 cc-plan 相同的 dispatch 命令格式。原因：文档任务需要理解全局上下文和设计意图，opus 质量更好，且文档任务通常跟在一批代码任务之后，cc-plan session 已空闲。
+> **Documentation task routing rule**: Tasks with `domain: docs` (updating playbook, SKILL.md, README, etc.) are always dispatched to `cc-plan` (claude-opus-4-6), using the same dispatch command format as cc-plan. Reason: documentation tasks require understanding global context and design intent — opus delivers better quality, and doc tasks typically follow a batch of coding tasks when the cc-plan session is already idle.
 
-> **前端路由判断标准**：看“是否有真实用户看到”。`internal` 前端（管理后台、自用界面、运营工具）走 `codex-1`；`external` 前端（对外产品 UI、用户可见界面）走 `cc-frontend`。
+> **Frontend routing criteria**: Based on "whether real users see it." `internal` frontends (admin panels, internal tools, ops dashboards) go to `codex-1`; `external` frontends (user-facing product UI, public interfaces) go to `cc-frontend`.
 
-#### Codex（`codex` CLI）
+#### Codex (`codex` CLI)
 
 Model is fixed as `gpt-5.4`. Reasoning effort is configurable via `-c model_reasoning_effort=<level>`:
 
@@ -572,19 +572,19 @@ tmux send-keys -t <session> Enter
 - **Batch:** all tasks complete, milestone progress
 - **Silent:** routine retries, answering agent questions, minor fixes
 
-## 项目记忆库
+## Project Memory Store
 
-每个 swarm 项目可以有独立的记忆目录 `projects/<slug>/`，包含：
+Each swarm project can have its own memory directory at `projects/<slug>/`, containing:
 
 ```
 projects/
   <slug>/
-    context.md      ← 项目背景（手动维护），cc-plan 任务自动注入
-    retro.jsonl     ← 任务回顾记录（on-complete.sh 自动 append）
+    context.md      ← Project background (manually maintained), auto-injected into cc-plan tasks
+    retro.jsonl     ← Task retrospective records (auto-appended by on-complete.sh)
 ```
 
-- **context.md**：记录项目的技术栈、关键决策、已知坑等背景信息。dispatch.sh 在派发 cc-plan 任务时会自动注入该文件内容，让规划 agent 拥有项目上下文。需人工维护，建议每个大批次结束后更新。
-- **retro.jsonl**：每条记录对应一个完成的任务，格式为 JSON Lines。on-complete.sh 在任务完成时自动 append，包含 task_id、status、elapsed、tokens、commit hash、field report 摘要等字段。用于复盘和趋势分析。
+- **context.md**: Records the project's tech stack, key decisions, known pitfalls, and other background information. dispatch.sh automatically injects this file's content when dispatching cc-plan tasks, giving the planning agent project-specific context. Manually maintained — recommended to update after each major batch completes.
+- **retro.jsonl**: Each record corresponds to a completed task, in JSON Lines format. on-complete.sh auto-appends on task completion, including task_id, status, elapsed time, tokens, commit hash, field report summary, and other fields. Used for retrospectives and trend analysis.
 
 ## Known Limitations
 
@@ -607,7 +607,7 @@ The following WARN-level issues were identified during the v1.6.0 security revie
 - `scripts/generate-image.sh` — Generic image generation interface. Backends: `nano-banana` (Gemini), `openai` (DALL-E 3), `stub` (testing). Configured via `swarm/config.json` `image_generation.*`. Backend whitelist validation + subprocess execution (no `source`); parameter validation with exit 1 on failure
 - `scripts/dispatch.sh` — Dispatch wrapper: TASK_ID whitelist validation + mark running (with tmux pre-check + cleanup trap rollback) + mark agent busy + tee output + quoted heredoc runner (no shell interpolation, env-var injection) + force-commit + on-complete callback. Reads `notify.verbose_dispatch` via swarm-config.sh; auto-injects `projects/<slug>/context.md` for cc-plan tasks
 - `scripts/swarm-new-batch.sh` — Archive current batch and create fresh active-tasks.json. Refuses to archive when running tasks exist (prevents late completions landing in new batch)
-- `scripts/on-complete.sh` — Completion callback: parse tokens + update status + mark agent idle + sync `agent-pool.json` liveness + trigger `cleanup-agents.sh` when all tasks finish + `openclaw system event` (wake orchestrator) + milestone alert + upgraded "20 分钟前通知" style notify. Reads `notify.target` via `swarm-config.sh resolve` (fallback: legacy notify-target file). Includes first 300 chars of commit body as Field Report in Telegram notification. Auto-appends retro record to `projects/<slug>/retro.jsonl`
+- `scripts/on-complete.sh` — Completion callback: parse tokens + update status + mark agent idle + sync `agent-pool.json` liveness + trigger `cleanup-agents.sh` when all tasks finish + `openclaw system event` (wake orchestrator) + milestone alert + upgraded compact-style notification. Reads `notify.target` via `swarm-config.sh resolve` (fallback: legacy notify-target file). Includes first 300 chars of commit body as Field Report in Telegram notification. Auto-appends retro record to `projects/<slug>/retro.jsonl`
 - `scripts/update-task-status.sh` — Atomically update task status in active-tasks.json (flock + tmpfile + fsync + os.replace). Features: auto-unblock dependents, task-not-found returns exit 2, heartbeat support (running→running updates `task.updated_at`)
 - `scripts/update-agent-status.sh` — Update a single agent's status in agent-pool.json (idle/busy/dead). Uses flock + tmpfile + fsync + os.replace for atomic writes
 - `scripts/parse-tokens.sh` — Parse token usage from agent output log (Claude Code + Codex formats)
