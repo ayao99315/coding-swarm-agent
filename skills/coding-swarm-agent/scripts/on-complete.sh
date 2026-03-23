@@ -427,10 +427,13 @@ fi
 
 if [[ -f "$TASKS_FILE" && -n "$NOTIFY_TARGET" ]]; then
   export COMPLETE_SENT_DIR
-  if ! COMPLETE_MSG=$(python3 - <<'PYEOF'
+  COMPLETE_MSG_ERR=$(mktemp /tmp/on-complete-msg.XXXXXX)
+  if ! COMPLETE_MSG=$(python3 - <<'PYEOF' 2>"$COMPLETE_MSG_ERR"
 import hashlib
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -467,6 +470,73 @@ def format_batch_duration(seconds):
         return "<1 分钟"
     minutes = max(1, round(seconds / 60))
     return f"约 {minutes} 分钟"
+
+
+def format_task_duration(seconds):
+    if seconds is None or seconds < 0:
+        return ""
+    seconds = int(round(seconds))
+    if seconds < 60:
+        return "<1 分钟"
+    minutes, _ = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        if minutes:
+            return f"{hours}h {minutes}m"
+        return f"{hours}h"
+    return f"{minutes} 分钟"
+
+
+def shorten_text(text, limit):
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 3)].rstrip() + "..."
+
+
+def task_status_emoji(status):
+    if status == "done":
+        return "✅"
+    if status == "failed":
+        return "❌"
+    return "⏳"
+
+
+commit_subject_cache = {}
+
+
+def resolve_commit_summary(commit):
+    commit_hash = ""
+    commit_subject = ""
+
+    if isinstance(commit, dict):
+        commit_hash = str(commit.get("hash") or commit.get("id") or "").strip()
+        commit_subject = str(commit.get("message") or commit.get("name") or "").strip()
+    elif isinstance(commit, str):
+        commit_hash = commit.strip()
+
+    if not commit_hash:
+        return "", ""
+
+    short_hash = commit_hash[:7]
+    if commit_subject:
+        return short_hash, shorten_text(commit_subject, 60)
+
+    cached = commit_subject_cache.get(commit_hash)
+    if cached is None:
+        try:
+            result = subprocess.run(
+                ["git", "log", "-1", "--format=%s", commit_hash],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+            cached = (result.stdout or "").strip()
+        except Exception:
+            cached = ""
+        commit_subject_cache[commit_hash] = cached
+
+    return short_hash, shorten_text(cached, 60)
 
 try:
     data = json.loads(tasks_file.read_text())
@@ -531,10 +601,63 @@ if total_input or total_output or total_cache_r:
         token_line += f" (+{format_k(total_cache_r)} cache)"
     lines.append(token_line)
 
-if created_times and updated_times:
-    duration_text = format_batch_duration((max(updated_times) - min(created_times)).total_seconds())
+duration_sec = None
+if len(updated_times) >= 2:
+    duration_sec = (max(updated_times) - min(updated_times)).total_seconds()
+elif len(updated_times) == 1 and len(created_times) == 1:
+    duration_sec = (updated_times[0] - created_times[0]).total_seconds()
+    if duration_sec > 6 * 3600:
+        duration_sec = None
+
+if duration_sec is not None:
+    duration_text = format_batch_duration(duration_sec)
     if duration_text:
         lines.append(f"⏱️ 批次用时: {duration_text}")
+
+try:
+    task_lines = []
+    for task in batch_tasks:
+        task_id = (task.get("id") or "?").strip() or "?"
+        task_name = (task.get("name") or "").strip() or task_id
+        detail_parts = []
+
+        tokens = task.get("tokens", {}) or {}
+        input_tokens = int(tokens.get("input", 0) or 0)
+        output_tokens = int(tokens.get("output", 0) or 0)
+        if input_tokens > 0:
+            detail_parts.append(f"{format_k(input_tokens + output_tokens)} tokens")
+
+        task_created_at = parse_time(task.get("created_at"))
+        task_updated_at = parse_time(task.get("updated_at"))
+        if task_created_at and task_updated_at:
+            task_duration_sec = (task_updated_at - task_created_at).total_seconds()
+            if 0 <= task_duration_sec < 6 * 3600:
+                task_duration_text = format_task_duration(task_duration_sec)
+                if task_duration_text:
+                    detail_parts.append(task_duration_text)
+
+        task_line = f"{task_id} {task_status_emoji(task.get('status'))} {task_name}"
+        if detail_parts:
+            task_line += f" ({', '.join(detail_parts)})"
+        task_lines.append(task_line)
+
+        task_commits = task.get("commits") or []
+        if task_commits:
+            short_hash, commit_subject = resolve_commit_summary(task_commits[0])
+            if short_hash and commit_subject:
+                task_lines.append(f"  └ commit: {short_hash} {commit_subject}")
+            elif short_hash:
+                task_lines.append(f"  └ commit: {short_hash}")
+            else:
+                task_lines.append("  └ No commit recorded")
+        else:
+            task_lines.append("  └ No commit recorded")
+
+    if task_lines:
+        lines.append("─────────────────────")
+        lines.extend(task_lines)
+except Exception as exc:
+    print(f"per-task summary build failed: {exc}", file=sys.stderr)
 
 sent_file.write_text(data.get("updated_at", "done"), encoding="utf-8")
 print("\n".join(lines))
@@ -542,7 +665,10 @@ PYEOF
 ); then
     log_on_complete_error "swarm complete message build failed"
     COMPLETE_MSG=""
+  elif [[ -s "$COMPLETE_MSG_ERR" ]]; then
+    log_on_complete_error "$(head -n 1 "$COMPLETE_MSG_ERR")"
   fi
+  rm -f "$COMPLETE_MSG_ERR"
   if [[ -n "$COMPLETE_MSG" ]]; then
     openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
       -m "$COMPLETE_MSG" --silent 2>/dev/null &
