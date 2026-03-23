@@ -3,7 +3,7 @@
   "project": "ayao-workflow-agent",
   "repo": "https://github.com/ayao99315/ayao-workflow-agent",
   "created_at": "2026-03-22T16:18:59Z",
-  "updated_at": "2026-03-23T00:05:33.490845+00:00",
+  "updated_at": "2026-03-23T12:31:49.055891+00:00",
   "tasks": [
     {
       "id": "DOC-PLAYBOOK",
@@ -30,12 +30,54 @@
       "id": "FIX-ONCOMPLETE",
       "name": "修复 dispatch.sh 后台启动时 on-complete.sh 不被执行的问题",
       "domain": "backend",
-      "status": "running",
+      "status": "done",
       "agent": "codex-1",
       "review_level": "full",
       "depends_on": [],
       "created_at": "2026-03-22T23:58:28.460118Z",
-      "updated_at": "2026-03-23T00:05:33.490845+00:00",
+      "updated_at": "2026-03-23T00:06:39.316805+00:00",
+      "tmux": "codex-1",
+      "commits": [
+        "f73b7cb"
+      ],
+      "tokens": {
+        "input": 67288,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "DOC-SKILL-I18N",
+      "name": "统一 SKILL.md 语言为英文，消除中英混杂",
+      "domain": "docs",
+      "status": "done",
+      "agent": "cc-plan",
+      "review_level": "skip",
+      "depends_on": [],
+      "created_at": "2026-03-23T12:15:40.826935Z",
+      "updated_at": "2026-03-23T12:20:54.162290+00:00",
+      "tmux": "cc-plan",
+      "commits": [
+        "1f4b6fd"
+      ],
+      "tokens": {
+        "input": 7,
+        "output": 10334,
+        "cache_read": 200109,
+        "cache_write": 39242
+      }
+    },
+    {
+      "id": "FIX-SWARM-NOTIFY",
+      "name": "修复批次完成通知：时间计算 + 每个任务的运行摘要",
+      "domain": "backend",
+      "status": "running",
+      "agent": "codex-1",
+      "review_level": "scan",
+      "depends_on": [],
+      "created_at": "2026-03-23T12:26:09.801451Z",
+      "updated_at": "2026-03-23T12:31:49.055891+00:00",
       "tmux": "codex-1"
     }
   ]

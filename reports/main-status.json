@@ -1,25 +1,29 @@
 {
   "agent": "main",
   "date": "2026-03-23",
-  "updated_at": "2026-03-23T06:18:11.528968Z",
-  "focus": "coding-swarm-agent / ayao-workflow-agent 系统修复与文档更新",
+  "updated_at": "2026-03-23T12:30:29+08:00",
+  "focus": "ayao-workflow-agent 通知链路收口",
   "done": [
-    "DOC-PLAYBOOK: cc-plan 深度读代码，重写 agent-swarm-playbook.md（16章/881行，去除历史内容）",
-    "同步新版 playbook 到 iCloud Obsidian cortex/",
-    "FIX-ONCOMPLETE: codex 修复 dispatch.sh on-complete 触发可靠性",
-    "FIX-ONCOMPLETE 根因修复: ${BASH_COMMAND@Q} bash 3.2 compat 问题，一行修复，commit c157318",
-    "active-tasks.json project 字段更名为 ayao-workflow-agent",
-    "AGENTS.md / MEMORY.md 清理旧 coding-swarm-agent 名称引用"
+    "修复 `skills/coding-swarm-agent/scripts/on-complete.sh` 的 swarm-complete 批次耗时计算，避免用任务注册时间夸大耗时",
+    "为 swarm-complete 通知新增 per-task 摘要块，展示 task id、状态、任务名、tokens、短耗时和首个 commit 摘要",
+    "给 per-task 摘要构建增加 best-effort 异常降级：失败只记错误日志，不影响完成通知主消息",
+    "完成语法验证并推送 commit `ed8c7c2` 到 `origin/main`"
   ],
   "doing": [],
   "blocked": [],
   "next": [
-    "观察下次任务完成通知是否正常触发"
+    "等待下一次真实 swarm 完成事件，确认 Telegram 汇总通知的耗时与 per-task 摘要展示正常"
   ],
   "need_from_ayao": [],
   "artifacts": [
-    "skills/coding-swarm-agent/references/agent-swarm-playbook.md",
-    "skills/coding-swarm-agent/scripts/on-complete.sh"
+    "skills/coding-swarm-agent/scripts/on-complete.sh",
+    "memory/2026-03-23.md"
   ],
-  "summary": "重写 playbook 文档 + 修复 on-complete.sh 长期未通知的根因（bash 3.2 @Q 语法不兼容）"
+  "summary": "修复 swarm-complete 通知的批次耗时误算，并补上 per-task 摘要明细",
+  "tokens": {
+    "codex_input": 0,
+    "codex_output": 0,
+    "cc_input": 0,
+    "cc_output": 0
+  }
 }
