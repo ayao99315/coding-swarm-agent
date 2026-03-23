@@ -207,13 +207,64 @@ PROMPT_MODE="${AGENT_SWARM_PROMPT_MODE:-none}"
 CC_JSON_MODE="${AGENT_SWARM_CC_JSON_MODE:-false}"
 WORKDIR="$(pwd)"
 COMMAND=( "$@" )
+COMPLETE_LOG="${LOG_FILE}"
+ON_COMPLETE_FIRED=0
+ON_COMPLETE_ERROR_LOG="/tmp/on-complete-swarm-errors.log"
 
 cleanup() {
   if [[ -n "${PROMPT_TMP_FILE}" ]] && [[ -f "${PROMPT_TMP_FILE}" ]]; then
     rm -f "${PROMPT_TMP_FILE}"
   fi
 }
-trap cleanup EXIT
+
+log_runner_error() {
+  local stage="$1"
+  local ec="$2"
+  {
+    printf '[%s] task=%s session=%s stage=%s exit=%s complete_log=%s\n' \
+      "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+      "${TASK_ID}" \
+      "${SESSION}" \
+      "${stage}" \
+      "${ec}" \
+      "${COMPLETE_LOG:-}"
+  } >> "${ON_COMPLETE_ERROR_LOG}"
+}
+
+fire_on_complete() {
+  local exit_code="$1"
+  if [[ "${ON_COMPLETE_FIRED}" == "1" ]]; then
+    return
+  fi
+  ON_COMPLETE_FIRED=1
+  if ! "${ON_COMPLETE}" "${TASK_ID}" "${SESSION}" "${exit_code}" "${COMPLETE_LOG}"; then
+    local oc_ec=$?
+    log_runner_error "on-complete" "${oc_ec}"
+  fi
+}
+
+finish_runner_exit() {
+  local runner_status=$?
+  cleanup
+  if [[ -n "${EC+x}" ]]; then
+    fire_on_complete "${EC}"
+  else
+    fire_on_complete "${runner_status}"
+  fi
+}
+
+handle_runner_signal() {
+  local signal_exit="$1"
+  trap - EXIT
+  cleanup
+  fire_on_complete "${signal_exit}"
+  exit "${signal_exit}"
+}
+
+trap finish_runner_exit EXIT
+trap 'handle_runner_signal 129' HUP
+trap 'handle_runner_signal 130' INT
+trap 'handle_runner_signal 143' TERM
 
 run_agent() {
   case "${PROMPT_MODE}" in
@@ -269,8 +320,6 @@ if [ -n "$(git -C "${WORKDIR}" status --porcelain 2>/dev/null)" ]; then
   fi
 fi
 [ "${FC_EC}" -ne 0 ] && EC="${FC_EC}"
-
-"${ON_COMPLETE}" "${TASK_ID}" "${SESSION}" "${EC}" "${COMPLETE_LOG}"
 
 SCRIPT
 

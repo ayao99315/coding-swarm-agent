@@ -5,7 +5,7 @@
 # Writes a completion signal, updates task state synchronously, then wakes the
 # main OpenClaw session so it can handle review and next-task dispatch.
 
-set -euo pipefail
+set -Eeuo pipefail
 
 TASK_ID="${1:?Usage: on-complete.sh <task_id> <session> <exit_code> [log_file]}"
 SESSION="${2:?}"
@@ -21,23 +21,45 @@ SWARM_COMPLETE_LOCK="/tmp/agent-swarm-manager.lock"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TS=$(date +%s)
+ERROR_LOG="/tmp/on-complete-swarm-errors.log"
+
+log_on_complete_error() {
+  local detail="${1:-unknown error}"
+  {
+    printf '[%s] task=%s session=%s exit=%s %s\n' \
+      "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+      "$TASK_ID" \
+      "$SESSION" \
+      "$EXIT_CODE" \
+      "$detail"
+  } >> "$ERROR_LOG"
+}
+
+trap 'log_on_complete_error "line=${LINENO} command=${BASH_COMMAND@Q} ec=$?"' ERR
+
 COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
 COMMIT_MSG=$(git log -1 --pretty=%s 2>/dev/null || echo "")
 export PATH="/opt/homebrew/opt/util-linux/bin:$PATH"
 CONTRIBUTOR_REPORT=""
 if command -v git &>/dev/null && git rev-parse --git-dir &>/dev/null 2>&1; then
-  CONTRIBUTOR_REPORT=$(git log -1 --format="%b" 2>/dev/null | head -8 || echo "")
+  if ! CONTRIBUTOR_REPORT=$(git log -1 --format="%b" 2>/dev/null | head -8 || echo ""); then
+    log_on_complete_error "contributor-report capture failed"
+    CONTRIBUTOR_REPORT=""
+  fi
 fi
 
 # Parse token usage from agent output log (zero extra API calls — pure shell parsing)
 TOKENS_JSON='{"input":0,"output":0,"cache_read":0,"cache_write":0}'
 if [[ -n "$LOG_FILE" && -f "$LOG_FILE" ]]; then
-  TOKENS_JSON=$("$SCRIPT_DIR/parse-tokens.sh" "$LOG_FILE" 2>/dev/null || echo "$TOKENS_JSON")
+  if ! TOKENS_JSON=$("$SCRIPT_DIR/parse-tokens.sh" "$LOG_FILE" 2>/dev/null || echo "$TOKENS_JSON"); then
+    log_on_complete_error "token parse failed for $LOG_FILE"
+    TOKENS_JSON='{"input":0,"output":0,"cache_read":0,"cache_write":0}'
+  fi
 fi
 
 # Write structured signal (include tokens)
 # Use python3 to build JSON — avoids broken JSONL when COMMIT_MSG contains " or \
-TASK_ID_ENV="$TASK_ID" \
+if ! TASK_ID_ENV="$TASK_ID" \
 SESSION_ENV="$SESSION" \
 EXIT_CODE_ENV="$EXIT_CODE" \
 COMMIT_HASH_ENV="$COMMIT_HASH" \
@@ -62,6 +84,9 @@ print(
     )
 )
 PYEOF
+then
+  log_on_complete_error "signal write failed"
+fi
 
 # Update task status immediately so any follow-up sees fresh state.
 if [[ "$EXIT_CODE" == "0" ]]; then
@@ -174,7 +199,7 @@ fi
 
 TASK_NAME="$TASK_ID"
 if [[ -f "$TASKS_FILE" ]]; then
-  TASK_NAME=$(python3 - "$TASKS_FILE" "$TASK_ID" <<'PYEOF'
+  if ! TASK_NAME=$(python3 - "$TASKS_FILE" "$TASK_ID" <<'PYEOF'
 import json
 import sys
 
@@ -194,7 +219,10 @@ for task in data.get("tasks", []):
 
 print(task_id)
 PYEOF
-)
+); then
+    log_on_complete_error "task name lookup failed"
+    TASK_NAME="$TASK_ID"
+  fi
 fi
 
 openclaw system event --text "Done: $TASK_ID $TASK_NAME" --mode now 2>/dev/null || true
@@ -393,11 +421,13 @@ fi
 # ── Swarm complete check ──────────────────────────────────────────────────
 # If all tasks are now done, emit one full summary for this swarm.
 COMPLETE_SENT_DIR="/tmp/agent-swarm-complete"
-mkdir -p "$COMPLETE_SENT_DIR"
+if ! mkdir -p "$COMPLETE_SENT_DIR"; then
+  log_on_complete_error "mkdir failed for $COMPLETE_SENT_DIR"
+fi
 
 if [[ -f "$TASKS_FILE" && -n "$NOTIFY_TARGET" ]]; then
   export COMPLETE_SENT_DIR
-  COMPLETE_MSG=$(python3 - <<'PYEOF'
+  if ! COMPLETE_MSG=$(python3 - <<'PYEOF'
 import hashlib
 import json
 import os
@@ -509,7 +539,10 @@ if created_times and updated_times:
 sent_file.write_text(data.get("updated_at", "done"), encoding="utf-8")
 print("\n".join(lines))
 PYEOF
-)
+); then
+    log_on_complete_error "swarm complete message build failed"
+    COMPLETE_MSG=""
+  fi
   if [[ -n "$COMPLETE_MSG" ]]; then
     openclaw message send --channel telegram --target "$NOTIFY_TARGET" \
       -m "$COMPLETE_MSG" --silent 2>/dev/null &
@@ -527,7 +560,7 @@ if [[ -n "$NOTIFY_TARGET" ]]; then
 
   TASK_NOTIFY_MSG=""
   if [[ -f "$TASKS_FILE" ]]; then
-    TASK_NOTIFY_MSG=$(python3 - "$TASKS_FILE" "$TASK_ID" "$EXIT_CODE" "$SESSION" <<'PYEOF'
+    if ! TASK_NOTIFY_MSG=$(python3 - "$TASKS_FILE" "$TASK_ID" "$EXIT_CODE" "$SESSION" <<'PYEOF'
 import json
 import sys
 from datetime import datetime
@@ -641,7 +674,10 @@ else:
 
 print("\n".join(lines))
 PYEOF
-)
+); then
+      log_on_complete_error "task notification message build failed"
+      TASK_NOTIFY_MSG=""
+    fi
   fi
 
   if [[ -z "$TASK_NOTIFY_MSG" ]]; then
