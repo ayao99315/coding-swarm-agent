@@ -3,7 +3,7 @@
   "project": "ayao-workflow-agent",
   "repo": "https://github.com/ayao99315/ayao-workflow-agent",
   "created_at": "2026-03-22T16:18:59Z",
-  "updated_at": "2026-03-23T12:31:49.055891+00:00",
+  "updated_at": "2026-03-23T12:48:51.189438+00:00",
   "tasks": [
     {
       "id": "DOC-PLAYBOOK",
@@ -72,12 +72,33 @@
       "id": "FIX-SWARM-NOTIFY",
       "name": "修复批次完成通知：时间计算 + 每个任务的运行摘要",
       "domain": "backend",
-      "status": "running",
+      "status": "done",
       "agent": "codex-1",
       "review_level": "scan",
       "depends_on": [],
       "created_at": "2026-03-23T12:26:09.801451Z",
-      "updated_at": "2026-03-23T12:31:49.055891+00:00",
+      "updated_at": "2026-03-23T12:33:29.406238+00:00",
+      "tmux": "codex-1",
+      "commits": [
+        "27b0360"
+      ],
+      "tokens": {
+        "input": 48827,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0
+      }
+    },
+    {
+      "id": "FIX-STARTED-AT",
+      "name": "记录 started_at 字段，用于准确计算任务实际运行时长",
+      "domain": "backend",
+      "status": "running",
+      "agent": "codex-1",
+      "review_level": "scan",
+      "depends_on": [],
+      "created_at": "2026-03-23T12:48:42.527197Z",
+      "updated_at": "2026-03-23T12:48:51.189438+00:00",
       "tmux": "codex-1"
     }
   ]

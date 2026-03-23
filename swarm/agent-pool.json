@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-23T12:31:49.113404+00:00",
+  "updated_at": "2026-03-23T12:48:51.232913+00:00",
   "limits": {
     "max_codex": 4,
     "max_cc_frontend": 2,
@@ -25,7 +25,7 @@
       "status": "idle",
       "current_task": null,
       "spawned_at": null,
-      "last_seen": "2026-03-23T12:20:54.289066+00:00"
+      "last_seen": "2026-03-23T12:33:29.533515+00:00"
     },
     {
       "id": "cc-review",
@@ -35,7 +35,7 @@
       "status": "idle",
       "current_task": null,
       "spawned_at": null,
-      "last_seen": "2026-03-23T12:20:54.289066+00:00"
+      "last_seen": "2026-03-23T12:33:29.533515+00:00"
     },
     {
       "id": "codex-review",
@@ -45,7 +45,7 @@
       "status": "dead",
       "current_task": null,
       "spawned_at": null,
-      "last_seen": "2026-03-23T12:20:54.289066+00:00"
+      "last_seen": "2026-03-23T12:33:29.533515+00:00"
     }
   ]
 }

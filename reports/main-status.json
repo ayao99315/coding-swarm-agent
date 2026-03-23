@@ -1,25 +1,26 @@
 {
   "agent": "main",
   "date": "2026-03-23",
-  "updated_at": "2026-03-23T12:30:29+08:00",
-  "focus": "ayao-workflow-agent 通知链路收口",
+  "updated_at": "2026-03-23T20:50:46+08:00",
+  "focus": "ayao-workflow-agent 任务时长统计修正",
   "done": [
-    "修复 `skills/coding-swarm-agent/scripts/on-complete.sh` 的 swarm-complete 批次耗时计算，避免用任务注册时间夸大耗时",
-    "为 swarm-complete 通知新增 per-task 摘要块，展示 task id、状态、任务名、tokens、短耗时和首个 commit 摘要",
-    "给 per-task 摘要构建增加 best-effort 异常降级：失败只记错误日志，不影响完成通知主消息",
-    "完成语法验证并推送 commit `ed8c7c2` 到 `origin/main`"
+    "在 `skills/coding-swarm-agent/scripts/update-task-status.sh` 中新增 `started_at` 写入：任务首次进入 `running` 时记录开始时间，heartbeat 只补缺不覆盖",
+    "在 `skills/coding-swarm-agent/scripts/on-complete.sh` 中把 swarm 批次耗时、per-task 摘要、单任务 Telegram 通知，以及 retro duration 全部切换为 `started_at -> updated_at`",
+    "保留旧数据兼容：任务缺少 `started_at` 时静默省略耗时；异常长耗时继续按原阈值抑制",
+    "完成 `bash -n` 验证并推送 commit `ef08688` 到 `origin/main`"
   ],
   "doing": [],
   "blocked": [],
   "next": [
-    "等待下一次真实 swarm 完成事件，确认 Telegram 汇总通知的耗时与 per-task 摘要展示正常"
+    "等待下一次真实 swarm 完成事件，确认新写入的 `started_at` 能驱动 Telegram 单任务通知与 swarm 汇总显示准确耗时"
   ],
   "need_from_ayao": [],
   "artifacts": [
+    "skills/coding-swarm-agent/scripts/update-task-status.sh",
     "skills/coding-swarm-agent/scripts/on-complete.sh",
     "memory/2026-03-23.md"
   ],
-  "summary": "修复 swarm-complete 通知的批次耗时误算，并补上 per-task 摘要明细",
+  "summary": "为任务写入 started_at，并用它修正单任务与批次级耗时统计",
   "tokens": {
     "codex_input": 0,
     "codex_output": 0,
